@@ -10,7 +10,9 @@
 		SaleViaExchange,
 		TransferOut,
 		TransferIn,
-		Indeterminate // Cannot determine with info provided - will determine in later phase. Use in parsers only.
+        IncomeInCurrency, // interest payment, bonus, etc
+        IncomeInAsset, // interest or bonus paid in asset (metal, crypto, etc)
+        Indeterminate // Cannot determine with info provided - will determine in later phase. Use in parsers only.
 	}
 }
 

@@ -6,13 +6,15 @@ namespace AssetAccounting
 	public abstract class ParserBase : IFileParser
 	{
 		private string serviceName;
+		private int headerLines;
 
-		public ParserBase(string serviceName)
+		public ParserBase(string serviceName, int headerLines = 1)
 		{
 			if (serviceName == null || serviceName == string.Empty)
 				throw new Exception("Cannot initialize ParserBase without a service name");
 
 			this.serviceName = serviceName;
+			this.headerLines = headerLines;
 		}
 
 		public virtual List<Transaction> Parse(string fileName)
@@ -29,7 +31,6 @@ namespace AssetAccounting
 
 		private List<Transaction> ParseTxt(string fileName)
 		{
-			const int headerLines = 1;
 			string serviceName = ParseServiceNameFromFilename(fileName);
 			string accountName = ParseAccountNameFromFilename(fileName, serviceName);
 
@@ -37,13 +38,14 @@ namespace AssetAccounting
 			StreamReader reader = new StreamReader(fileName);
 			string? line = reader.ReadLine();
 			int lineCount = 0;
-			while (line != null && line != string.Empty)
+            
+            while (lineCount++ < this.headerLines)
+            {
+                line = reader.ReadLine();
+                continue;
+            }
+            while (line != null && line != string.Empty)
 			{
-				if (lineCount++ < headerLines)
-				{
-					line = reader.ReadLine();
-					continue;
-				}
 				string[] fields = line.Split('\t');
 				if (fields.Length < 2)
 				{
@@ -80,10 +82,11 @@ namespace AssetAccounting
 
 		protected string ParseAccountNameFromFilename(string fileName, string? thisServiceName = null)
 		{
+			var trimmedFileName = Path.GetFileName(fileName);
 			if (thisServiceName == null)
 				thisServiceName = serviceName;
 			Regex r = new Regex(string.Format(@"^{0}-(?<account>\w+)-", thisServiceName));
-			Match m = r.Match(fileName);
+			Match m = r.Match(trimmedFileName);
 			if (m.Success)
 				return m.Groups["account"].Value;
 			else
@@ -92,7 +95,7 @@ namespace AssetAccounting
 
 		protected string ParseServiceNameFromFilename(string fileName)
 		{
-			var parts = fileName.Split('-');
+			var parts = Path.GetFileName(fileName).Split('-');
 			if (serviceName.ToLower().Contains("generic"))
 				serviceName = parts[0];
 			return parts[0];

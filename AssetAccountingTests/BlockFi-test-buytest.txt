@@ -1,0 +1,3 @@
+﻿Trade ID,Date,Buy Quantity,Buy Currency,Sold Quantity,Sold Currency,Rate Amount,Rate Currency,Type,Frequency,Destination
+5caa848f-8859-47d3-bae1-d7f0f9994395,2022-07-06 03:51:55,46.04229048,usdc,46.04229048,gusd,1.00000000,usdc,Trade,One Time,Wallet
+c049a60e-fff7-4a28-91a8-5e274b38aee8,2022-07-06 03:50:25,58.93806415,usdc,0.00301843,btc,19526.06625000,usdc,Trade,One Time,Wallet

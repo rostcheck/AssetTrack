@@ -1,0 +1,2 @@
+﻿OrderDateTime	OrderID	Action	Vault	Value	ClientTransRef	Currency	Metal	GoodTil	LastModified	PricePerKg	OrderType	Status	Quantity	QtyFilled	Commission	Consideration	TradeType
+09/19/2019 18:05	37055944	Buy	Zurich	2.19	0	USD	Silver		09/19/2019 18:05	20751	GoodUntilCancelled	Done	0.004	0.004	0	0	OrderBoardTrade

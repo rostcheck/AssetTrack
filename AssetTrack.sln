@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AssetTrack", "AssetTrack\As
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AssetAccounting", "AssetAccounting\AssetAccounting.csproj", "{51B7E396-C531-4177-B403-BC23014C11E7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AssetAccountingTests", "AssetAccountingTests\AssetAccountingTests.csproj", "{65EBF21F-5464-4186-B793-28C46A26566A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{51B7E396-C531-4177-B403-BC23014C11E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{51B7E396-C531-4177-B403-BC23014C11E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{51B7E396-C531-4177-B403-BC23014C11E7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65EBF21F-5464-4186-B793-28C46A26566A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65EBF21F-5464-4186-B793-28C46A26566A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65EBF21F-5464-4186-B793-28C46A26566A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65EBF21F-5464-4186-B793-28C46A26566A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,0 +1,9 @@
+﻿"You can use this transaction report to inform your likely tax obligations. For US customers, Sells, Converts, Rewards Income, Learning Rewards, and Donations are taxable events. For final tax obligations, please consult your tax advisor."
+
+
+
+Transactions
+User,davidrostcheck@gmail.com,5165f1e09bd68be996000091
+
+Timestamp,Transaction Type,Asset,Quantity Transacted,Spot Price Currency,Spot Price at Transaction,Subtotal,Total (inclusive of fees and/or spread),Fees and/or Spread,Notes
+2017-12-19T05:40:53Z,Buy,BTC,0.00509137,USD,19053.81,97.01,100.00,2.99,Bought 0.00509137 BTC for $100.00 USD
