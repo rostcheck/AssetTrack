@@ -7,29 +7,73 @@ namespace AssetAccounting
 	{
 		private string serviceName;
 		private int headerLines;
+		private bool isLedgerFormat;
 
-		public ParserBase(string serviceName, int headerLines = 1)
+		public ParserBase(string serviceName, int headerLines = 1, bool ledgerFormat = false)
 		{
 			if (serviceName == null || serviceName == string.Empty)
 				throw new Exception("Cannot initialize ParserBase without a service name");
 
 			this.serviceName = serviceName;
 			this.headerLines = headerLines;
+			this.isLedgerFormat = ledgerFormat;
 		}
 
 		public virtual List<Transaction> Parse(string fileName)
 		{
-			if (fileName.ToLower().EndsWith(".txt"))
-				return ParseTxt(fileName);
-			else if (fileName.ToLower().EndsWith(".csv"))
-				return ParseCsv(fileName);
+			if (this.isLedgerFormat)
+			{
+                string serviceName = ParseServiceNameFromFilename(fileName);
+                string accountName = ParseAccountNameFromFilename(fileName, serviceName);
+                var lines = ReadLines(fileName);
+				return this.ParseLines(lines, serviceName, accountName);
+			}
 			else
-				throw new FileLoadException("Unrecognized filename extension");
+			{
+				if (fileName.ToLower().EndsWith(".txt"))
+					return ParseTxt(fileName);
+				else if (fileName.ToLower().EndsWith(".csv"))
+					return ParseCsv(fileName);
+				else
+					throw new FileLoadException("Unrecognized filename extension");
+			}
 		}
 
 		public abstract Transaction ParseFields(IList<string> fields, string serviceName, string accountName);
 
-		private List<Transaction> ParseTxt(string fileName)
+        public virtual List<Transaction> ParseLines(IList<string> lines, string serviceName, string accountName)
+		{
+            // Only implemented for ledger-style parsers that may need to look at multiple lines to form a transaction
+            throw new NotImplementedException(); 
+        }
+
+        // Returns all lines for further parsing. Needed for ledger-style ("transaction-format" files, where a
+        // transaction can span two lines, the debug and credit sides separately
+        public List<string> ReadLines(string fileName)
+        {
+            string serviceName = ParseServiceNameFromFilename(fileName);
+            string accountName = ParseAccountNameFromFilename(fileName, serviceName);
+
+            var lines = new List<string>();
+            StreamReader reader = new StreamReader(fileName);
+            string? line = reader.ReadLine();
+            int lineCount = 0;
+
+            while (lineCount++ < this.headerLines)
+            {
+                line = reader.ReadLine();
+                continue;
+            }
+            while (line != null && line != string.Empty)
+            {
+                lines.Add(line);
+                line = reader.ReadLine();
+            }
+
+            return lines;
+        }
+
+        private List<Transaction> ParseTxt(string fileName)
 		{
 			string serviceName = ParseServiceNameFromFilename(fileName);
 			string accountName = ParseAccountNameFromFilename(fileName, serviceName);
