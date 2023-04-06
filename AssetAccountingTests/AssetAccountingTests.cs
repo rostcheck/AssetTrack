@@ -36,7 +36,7 @@ public class ParserTests
         Assert.AreEqual(100m, transactions[0].AmountPaid);
         Assert.AreEqual(0.00509137m, transactions[0].AmountReceived);
         Assert.AreEqual("Coinbase", transactions[0].Service);
-        Assert.AreEqual("Bought 0.00509137 BTC for $100.00 USD Spot: 19053.81", transactions[0].Memo);
+        Assert.AreEqual("Bought 0.00509137 BTC for $100.00 USD", transactions[0].Memo);
     }
 
 
