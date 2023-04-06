@@ -17,12 +17,12 @@
 		public string? TransferFromVault { get; set; }
 		public string? TransferFromAccount { get; set; }
 		public string ItemType { get; set; }
-		public decimal SpotPrice { get; set; }
+		public decimal? SpotPrice { get; set; }
 
 		public Transaction(string service, string account, DateTime dateAndTime, string transactionID, 
 			TransactionTypeEnum transactionType, string vault, decimal amountPaid, CurrencyUnitEnum currencyUnit, 
 			decimal amountReceived, AssetMeasurementUnitEnum measurementUnit, AssetTypeEnum assetType, string memo, 
-			string itemType, decimal spotPrice)
+			string itemType, decimal? spotPrice)
 		{
 			this.Service = service;
 			this.Account = account;
@@ -48,7 +48,10 @@
 				{
 					case TransactionTypeEnum.Purchase:
 					case TransactionTypeEnum.PurchaseViaExchange:
+					case TransactionTypeEnum.TransferIn:
+					case TransactionTypeEnum.IncomeInAsset:
 						return AmountReceived;
+					case TransactionTypeEnum.TransferOut:
 					case TransactionTypeEnum.Sale:
 					case TransactionTypeEnum.SaleViaExchange:
 					case TransactionTypeEnum.StorageFeeInAsset:

@@ -43,7 +43,7 @@ namespace AssetAccounting
             else {
                 currencyAmount = Decimal.Parse(fields[7]);
             }
-            string memo = fields[9].Replace("\"", "") + " Spot: " + fields[5];
+            string memo = fields[9].Replace("\"", "");
 
             string vault = "Coinbase-" + accountName;
             string transactionID = string.Format("{0}-{1}", vault, recordCount++);
@@ -71,7 +71,7 @@ namespace AssetAccounting
                 amountPaid = Math.Abs(currencyAmount);
             else if (transactionType != TransactionTypeEnum.IncomeInCurrency) // ignore interest
                 throw new Exception("Unknown transaction type " + transactionType);
-            decimal spotPrice = Math.Abs(currencyAmount / amount);
+            decimal? spotPrice = Utils.GetSpotPrice(currencyAmount, amount);
 
             return new Transaction(serviceName, accountName, dateAndTime,
                 transactionID, transactionType, vault, amountPaid, currencyUnit, amountReceived,

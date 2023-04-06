@@ -38,7 +38,7 @@
 			else
 				throw new Exception("Unknown transaction type " + transactionType);	
 			CurrencyUnitEnum currencyUnit = GetCurrencyUnit(fields[6]);
-			decimal spotPrice = Math.Abs(totalCompensation / weight); 
+			decimal? spotPrice = Utils.GetSpotPrice(totalCompensation, weight); 
 
 			return new Transaction("BullionVault", accountName, dateAndTime, 
 				transactionID, transactionType, vault, amountPaid, currencyUnit, amountReceived, 

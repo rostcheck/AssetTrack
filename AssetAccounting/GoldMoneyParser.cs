@@ -51,7 +51,7 @@ namespace AssetAccounting
 				currencyAmount = amountReceived;
 				assetAmount = amountPaid;
             }
-			decimal spotPrice = Math.Abs(currencyAmount / assetAmount);
+			decimal? spotPrice = Utils.GetSpotPrice(currencyAmount, assetAmount);
 			return new Transaction("GoldMoney", accountName, dateAndTime, 
 				transactionID, transactionType, vault, amountPaid, currencyUnit, amountReceived, 
 				weightUnit, metalType, memo, metalType.ToString(), spotPrice);

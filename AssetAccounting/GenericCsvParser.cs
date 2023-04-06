@@ -59,7 +59,7 @@
 				throw new Exception("Unknown transaction type " + transactionType);
 
 			AssetTypeEnum assetType = GetAssetType(fields[8]);
-			decimal spotPrice = Math.Abs(currencyAmount / weight);
+			decimal? spotPrice = Utils.GetSpotPrice(currencyAmount, weight);
 
 			return new Transaction(serviceName, accountName, dateAndTime,
 				transactionID, transactionType, vault, amountPaid, currencyUnit, amountReceived,

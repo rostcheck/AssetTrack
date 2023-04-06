@@ -19,8 +19,16 @@
 			else			
 				return ConvertFromGrams(ConvertToGrams(measurement, fromUnits), toUnits); 
 		}
-			
-		private static decimal ConvertToGrams(decimal weight, AssetMeasurementUnitEnum fromUnits)
+
+        public static decimal? GetSpotPrice(decimal currencyAmount, decimal assetAmount)
+        {
+            if (assetAmount == 0.0m || currencyAmount == 0.0m)
+                return null;
+            else
+                return Math.Abs(currencyAmount / assetAmount);
+        }
+
+        private static decimal ConvertToGrams(decimal weight, AssetMeasurementUnitEnum fromUnits)
 		{
 			switch (fromUnits)
 			{
@@ -45,6 +53,7 @@
 					throw new Exception("Unknown weight unit " + toUnits);
 			}
 		}
+
+
 	}
 }
-

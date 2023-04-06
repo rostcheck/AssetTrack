@@ -148,21 +148,18 @@ namespace AssetTrack
 		private static void DumpTransactions(string filename, List<Transaction> transactions)
 		{
 			StreamWriter sw = new StreamWriter(filename);
-			sw.WriteLine("Date\tService\tType\tAsset\tMeasure\tUnit\tItemType\tAccount\tAmountPaid\tAmountReceived\tCurrency\tVault\tTransactionId\tMemo");
-			string formatString = "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\t{11}\t{12}\t{13}";
+			sw.WriteLine("Date\tService\tType\tAsset\tMeasure\tUnit\tItemType\tAccount\tAmountPaid\tAmountReceived\tCurrency\tVault\tTransactionId\tSpotPrice\tMemo");
+			string formatString = "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\t{11}\t{12}\t{13}\t{14}";
 
 			foreach (var transaction in transactions.OrderBy(s => s.DateAndTime).ToList())
 			{
-				if (transaction.Measure == 0.03785243m)
-				{
-					Console.WriteLine("hit breakpoint");
-				}
 				string formatted = string.Format(formatString, transaction.DateAndTime, transaction.Service,
 					transaction.TransactionType.ToString(),
 					transaction.AssetType.ToString().ToLower(),
 					transaction.Measure, transaction.MeasurementUnit, transaction.ItemType,
 					transaction.Account, transaction.AmountPaid, transaction.AmountReceived,
-					transaction.CurrencyUnit, transaction.Vault, transaction.TransactionID, transaction.Memo);
+					transaction.CurrencyUnit, transaction.Vault, transaction.TransactionID, transaction.SpotPrice,
+					transaction.Memo);
 				sw.WriteLine(formatted);
 			}
 			sw.Close();

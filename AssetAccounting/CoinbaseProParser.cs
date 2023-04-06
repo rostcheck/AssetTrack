@@ -11,6 +11,8 @@ namespace AssetAccounting
     // default,fee,2022-01-03T20:04:08.967Z,-1.2269500000000000,2804.6591722022958500,USD,,258594329,3609df77-468d-44a1-a047-5dbad155be45
     public class CoinbaseProParser : ParserBase, IFileParser
     {
+        int recordCount = 0;
+
         public CoinbaseProParser() : base("Coinbase", 1, true)
         {
         }
@@ -37,13 +39,15 @@ namespace AssetAccounting
                 string thisAssetType = fields[5];
                 DateTime dateAndTime = DateTime.Parse(fields[2]);
                 string transactionId = fields[7];
+                string vault = "CoinbasePro-" + accountName;
+                if (transactionId == "")
+                    transactionId = string.Format("{0}-{1}", vault, recordCount++);
 
                 decimal currencyAmount = 0.0m;
                 decimal assetAmount = 0.0m;
                 decimal thisLineAmount = Decimal.Parse(fields[3]);
                 string thisLineItemType = fields[5];
-                var currencyUnit = CurrencyUnitEnum.USD; // only supports USD
-                const string vault = "";
+                var currencyUnit = CurrencyUnitEnum.USD; // only supports USD                
                 string itemType = thisLineItemType;
                 AssetMeasurementUnitEnum measurementUnit = AssetMeasurementUnitEnum.CryptoCoin;// Only support crypto
                 AssetTypeEnum assetType = AssetTypeEnum.Crypto; // only support crypto
@@ -128,7 +132,7 @@ namespace AssetAccounting
                     amountPaid = thisLineAmount;
                 else 
                     throw new Exception("Unknown transaction type " + transactionType);
-                decimal spotPrice = Math.Abs(currencyAmount / assetAmount);
+                decimal? spotPrice = Utils.GetSpotPrice(currencyAmount, assetAmount);
 
                 string memo = FormMemo(transactionType, amountPaid, amountReceived, itemType);
                 transactions.Add(new Transaction(serviceName, accountName, dateAndTime,
@@ -138,6 +142,7 @@ namespace AssetAccounting
             }
             return transactions;
         }
+        
 
         private static string FormMemo(TransactionTypeEnum transactionType, decimal amountPaid, decimal amountReceived,
             string itemType)

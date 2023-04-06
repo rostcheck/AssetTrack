@@ -61,7 +61,7 @@ namespace AssetAccounting
             else
                 throw new Exception("Unknown transaction type " + transactionType);
 
-            decimal spotPrice = Math.Abs(currencyAmount / weight);
+            decimal? spotPrice = Utils.GetSpotPrice(currencyAmount, weight);
             AssetTypeEnum assetType = GetAssetType(fields[8]);
 
             return new Transaction(serviceName, accountName, dateAndTime,
