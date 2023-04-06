@@ -8,18 +8,35 @@
 
 		public override Transaction ParseFields(IList<string> fields, string serviceName, string accountName)
         {
+			// 0: date/time
+			// 1: vault
+			// 2: transaction id
+			// 3: transaction type
+			// 4: price (in currency)
+			// 5: currency unit
+			// 6: weight
+			// 7: weight unit
+			// 8: metal
+			// 9: ignored
+			// 10: memo
+			// 11: item type
 			DateTime dateAndTime = DateTime.Parse(fields[0]);
 			string vault = fields[1];
 			string transactionID = fields[2];
 			string transactionTypeString = fields[3];
 			TransactionTypeEnum transactionType = GetTransactionType(transactionTypeString);
-			decimal currencyAmount = Convert.ToDecimal(fields[4].Replace("$", ""));
+			decimal currencyAmount = 0.0m;
+			if (fields[4] != "")
+				currencyAmount = Decimal.Parse(fields[4].Replace("$", ""));
 			CurrencyUnitEnum currencyUnit = GetCurrencyUnit(fields[5]);
-			decimal weight = Convert.ToDecimal(fields[6]);
+			decimal weight = Decimal.Parse(fields[6]);
 			AssetMeasurementUnitEnum weightUnit = GetWeightUnit(fields[7]);
-			string itemType = "Generic";
-			if (fields.Count > 12)
-				itemType = fields[12];
+			string memo = "";
+            if (fields.Count >= 10)
+                memo = fields[10];
+            string itemType = "Generic";
+			if (fields.Count >= 11)
+				itemType = fields[11];
 
 			decimal amountPaid = 0.0m, amountReceived = 0.0m;
 			if (transactionType == TransactionTypeEnum.Purchase)
@@ -42,10 +59,11 @@
 				throw new Exception("Unknown transaction type " + transactionType);
 
 			AssetTypeEnum assetType = GetAssetType(fields[8]);
+			decimal spotPrice = Math.Abs(currencyAmount / weight);
 
 			return new Transaction(serviceName, accountName, dateAndTime,
 				transactionID, transactionType, vault, amountPaid, currencyUnit, amountReceived,
-				weightUnit, assetType, "", itemType);
+				weightUnit, assetType, memo, itemType, spotPrice);
 		}
 
 		private static CurrencyUnitEnum GetCurrencyUnit(string currencyUnit)

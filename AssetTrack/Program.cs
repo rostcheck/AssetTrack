@@ -18,6 +18,8 @@ namespace AssetTrack
 			GoldMoneyParser goldMoneyParser = new GoldMoneyParser();
 			BullionVaultParser bullionVaultParser = new BullionVaultParser();
 			GenericCsvParser genericCsvParser = new GenericCsvParser();
+			CoinbaseParser coinbaseParser = new CoinbaseParser();
+			CoinbaseProParser coinbaseProParser = new CoinbaseProParser();
 			List<Transaction> transactionList = new List<Transaction>();
 			foreach (string filename in args)
 			{
@@ -30,21 +32,20 @@ namespace AssetTrack
 						transactionList.AddRange(goldMoneyParser.Parse(filename));
 					else if (filename.Contains("BullionVault"))
 						transactionList.AddRange(bullionVaultParser.Parse(filename));
-					else
+                    else if (filename.Contains("CoinbasePro"))
+                        transactionList.AddRange(coinbaseProParser.Parse(filename));
+                    else if (filename.Contains("Coinbase"))
+                        transactionList.AddRange(coinbaseParser.Parse(filename));
+                    else
 						transactionList.AddRange(genericCsvParser.Parse(filename));
 				}
 			}
 			transactionList = transactionList.OrderBy(s => s.DateAndTime).ToList();
-			storageService.ApplyTransactions(transactionList);
-			PrintResults(storageService);
+			//storageService.ApplyTransactions(transactionList);
+			//PrintResults(storageService);
 			DumpTransactions("tm-transactions.txt", transactionList);
-			ExportLots(storageService.Lots, "tm-lots.txt");
-			ExportHoldings(storageService.Lots, "tm-holdings.txt");
-			//string command = "";
-			//do {
-			//	ProcessCommand(command, storageService);
-			//	command = GetString("command: ");
-			//} while (command != "quit");
+			//ExportLots(storageService.Lots, "tm-lots.txt");
+			//ExportHoldings(storageService.Lots, "tm-holdings.txt");
 		}
 
 		private static void ProcessCommand(string command, AssetStorageService storageService)
@@ -147,12 +148,15 @@ namespace AssetTrack
 		private static void DumpTransactions(string filename, List<Transaction> transactions)
 		{
 			StreamWriter sw = new StreamWriter(filename);
-			sw.WriteLine("Date\tService\tType\tAsset\tMeasure\tUnit\t\tItemType\tAccount\tAmountPaid\tAmountReceived\tCurrency\tVault\tTransactionId\tMemo");
+			sw.WriteLine("Date\tService\tType\tAsset\tMeasure\tUnit\tItemType\tAccount\tAmountPaid\tAmountReceived\tCurrency\tVault\tTransactionId\tMemo");
 			string formatString = "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\t{11}\t{12}\t{13}";
 
 			foreach (var transaction in transactions.OrderBy(s => s.DateAndTime).ToList())
 			{
-
+				if (transaction.Measure == 0.03785243m)
+				{
+					Console.WriteLine("hit breakpoint");
+				}
 				string formatted = string.Format(formatString, transaction.DateAndTime, transaction.Service,
 					transaction.TransactionType.ToString(),
 					transaction.AssetType.ToString().ToLower(),

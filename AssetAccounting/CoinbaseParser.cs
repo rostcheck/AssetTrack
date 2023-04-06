@@ -10,8 +10,9 @@ namespace AssetAccounting
 
     public class CoinbaseParser : ParserBase, IFileParser
     {
+        int recordCount = 0;
         public CoinbaseParser() : base("Coinbase", 8)
-        {
+        {        
         }
 
         public override Transaction ParseFields(IList<string> fields, string serviceName, string accountName)
@@ -30,13 +31,22 @@ namespace AssetAccounting
             DateTime dateAndTime = DateTime.Parse(fields[0]);
             TransactionTypeEnum transactionType = GetTransactionType(fields[1]);
             string itemType = fields[2];
-            decimal amount = Convert.ToDecimal(fields[3]);
+            decimal amount = Decimal.Parse(fields[3],System.Globalization.NumberStyles.Any);
             CurrencyUnitEnum currencyUnit = GetCurrencyUnit(fields[4]);
-            decimal currencyAmount = Convert.ToDecimal(fields[7]);
-            string memo = fields[9] + " Spot: " + fields[5];
 
-            const string vault = "";
-            const string transactionID = "";
+            decimal currencyAmount = 0.0m;
+            if (fields[7] == "")
+            {
+                decimal spotPriceAtTransaction = Decimal.Parse(fields[5]);
+                currencyAmount = spotPriceAtTransaction * amount;
+            }
+            else {
+                currencyAmount = Decimal.Parse(fields[7]);
+            }
+            string memo = fields[9].Replace("\"", "") + " Spot: " + fields[5];
+
+            string vault = "Coinbase-" + accountName;
+            string transactionID = string.Format("{0}-{1}", vault, recordCount++);
             
             AssetMeasurementUnitEnum measurementUnit = AssetMeasurementUnitEnum.CryptoCoin;// Only support crypto
             AssetTypeEnum assetType = AssetTypeEnum.Crypto; // only support crypto
@@ -61,10 +71,11 @@ namespace AssetAccounting
                 amountPaid = Math.Abs(currencyAmount);
             else if (transactionType != TransactionTypeEnum.IncomeInCurrency) // ignore interest
                 throw new Exception("Unknown transaction type " + transactionType);
+            decimal spotPrice = Math.Abs(currencyAmount / amount);
 
             return new Transaction(serviceName, accountName, dateAndTime,
                 transactionID, transactionType, vault, amountPaid, currencyUnit, amountReceived,
-                measurementUnit, assetType, memo, itemType);
+                measurementUnit, assetType, memo, itemType, spotPrice);
         }
 
         private static CurrencyUnitEnum GetCurrencyUnit(string currencyUnit)

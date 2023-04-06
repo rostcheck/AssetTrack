@@ -27,8 +27,9 @@ namespace AssetAccounting
 			string transactionID = fields[1];
 			string transactionTypeString = fields[2];
 			string memo = fields[6];
-			decimal amountPaid = (fields[4] == string.Empty) ? 0.0m : Convert.ToDecimal(fields[4]);
-			decimal amountReceived = (fields[5] == string.Empty) ? 0.0m : Convert.ToDecimal(fields[5]);
+			decimal amountPaid = (fields[4] == string.Empty) ? 0.0m : Decimal.Parse(fields[4]);
+			decimal amountReceived = (fields[5] == string.Empty) ? 0.0m : Decimal.Parse(fields[5]);
+			decimal currencyAmount = 0.0m, assetAmount = 0.0m;
 			TransactionTypeEnum apparentTransactionType = GetApparentTransactionType(amountPaid, amountReceived);
 			TransactionTypeEnum transactionType = GetTransactionType(transactionTypeString, memo, apparentTransactionType);
 			memo = FixMemo(transactionTypeString, memo, transactionID);
@@ -40,9 +41,20 @@ namespace AssetAccounting
 				amountPaid = ParseAmountPaid(memo, currencyUnit);
 			if (amountReceived == 0.0m && transactionType != TransactionTypeEnum.TransferIn)
 				amountReceived = ParseAmountReceived(memo, currencyUnit);
+			if (transactionType == TransactionTypeEnum.Purchase)
+			{
+				currencyAmount = amountPaid;
+				assetAmount = amountReceived;
+            }
+			else
+			{
+				currencyAmount = amountReceived;
+				assetAmount = amountPaid;
+            }
+			decimal spotPrice = Math.Abs(currencyAmount / assetAmount);
 			return new Transaction("GoldMoney", accountName, dateAndTime, 
 				transactionID, transactionType, vault, amountPaid, currencyUnit, amountReceived, 
-				weightUnit, metalType, memo, metalType.ToString());
+				weightUnit, metalType, memo, metalType.ToString(), spotPrice);
 		}
 
 		private static TransactionTypeEnum GetApparentTransactionType(decimal amountPaid, decimal amountReceived)
@@ -158,7 +170,7 @@ namespace AssetAccounting
 				string amountString = m.Groups["cost"].Value;
 				if (amountString.EndsWith("."))
 					amountString = amountString.Remove(amountString.Length - 1);
-				amount = Convert.ToDecimal(amountString);
+				amount = Decimal.Parse(amountString);
 			}
 
 			// Early memos, without thank-you message, include a fee that is not totalled
@@ -167,7 +179,7 @@ namespace AssetAccounting
 				r = new Regex(@"plus a \$(?<fee>[\d\.\,]+) processing fee");
 				m = r.Match(memo);
 				if (m.Success)				
-					amount += Convert.ToDecimal(m.Groups["fee"].Value);
+					amount += Decimal.Parse(m.Groups["fee"].Value);
 			}
 			return amount;
 		}

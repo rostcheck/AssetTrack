@@ -40,7 +40,7 @@ namespace AssetAccounting
 
                 decimal currencyAmount = 0.0m;
                 decimal assetAmount = 0.0m;
-                decimal thisLineAmount = Convert.ToDecimal(fields[3]);
+                decimal thisLineAmount = Decimal.Parse(fields[3]);
                 string thisLineItemType = fields[5];
                 var currencyUnit = CurrencyUnitEnum.USD; // only supports USD
                 const string vault = "";
@@ -81,7 +81,7 @@ namespace AssetAccounting
                     var nextLineFields = lines[lineNumber].Split(',');
                     if (nextLineFields[7] != transactionId || nextLineFields[1] != "match")
                         throw new Exception("Could not find matching line for transaction: " + transactionId);
-                    var nextLineAmount = Convert.ToDecimal(nextLineFields[3]);
+                    var nextLineAmount = Decimal.Parse(nextLineFields[3]);
                     var nextLineAssetType = nextLineFields[5];
                     if (thisAssetType == "USD")
                     {
@@ -106,7 +106,7 @@ namespace AssetAccounting
                     if (plus2LineFields[5] != "USD")
                         throw new Exception("Fee expressed in non-USD currency " + plus2LineFields[5] + " for transaction: " + transactionId);
                     // Add the fee to the currency amount (increase the basis)
-                    currencyAmount += Convert.ToDecimal(plus2LineFields[3]);
+                    currencyAmount += Decimal.Parse(plus2LineFields[3]);
 
                 }
                 else throw new Exception("Unrecognized transaction type: " + inputTransactionType);
@@ -128,11 +128,12 @@ namespace AssetAccounting
                     amountPaid = thisLineAmount;
                 else 
                     throw new Exception("Unknown transaction type " + transactionType);
+                decimal spotPrice = Math.Abs(currencyAmount / assetAmount);
 
                 string memo = FormMemo(transactionType, amountPaid, amountReceived, itemType);
                 transactions.Add(new Transaction(serviceName, accountName, dateAndTime,
                     transactionId, transactionType, vault, amountPaid, currencyUnit, amountReceived,
-                    measurementUnit, assetType, memo, itemType));
+                    measurementUnit, assetType, memo, itemType, spotPrice));
                 lineNumber++;
             }
             return transactions;
@@ -146,9 +147,9 @@ namespace AssetAccounting
             else if (transactionType == TransactionTypeEnum.Purchase)
                 return string.Format("Bought {0:0.000000} {1} for {2:0.00} USD", amountReceived, itemType, amountPaid);
             else if (transactionType == TransactionTypeEnum.TransferIn)
-                return string.Format("Transferred in {1:0.000000} {2}", amountReceived, itemType);
+                return string.Format("Transferred in {0:0.000000} {1}", amountReceived, itemType);
             else if (transactionType == TransactionTypeEnum.TransferOut)
-                return string.Format("Transferred out {1:0.000000} {2}", amountReceived, itemType);
+                return string.Format("Transferred out {0:0.000000} {1}", amountReceived, itemType);
             else
                 throw new Exception("Unsupported transaction type: " + transactionType.ToString());
 

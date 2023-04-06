@@ -39,7 +39,8 @@
 						sourceTransaction.DateAndTime, sourceTransaction.TransactionID, TransactionTypeEnum.StorageFeeInAsset,
 						sourceTransaction.Vault, amountDifference, sourceTransaction.CurrencyUnit, 0.0m, 
 						sourceTransaction.MeasurementUnit, sourceTransaction.AssetType, 
-						"Transfer fee (in asset) from like-kind exchange " + sourceTransaction.TransactionID, "Generic");
+						"Transfer fee (in asset) from like-kind exchange " + sourceTransaction.TransactionID, "Generic",
+						sourceTransaction.SpotPrice);
 					transactionList.Add(storageFee);
 				}
 

@@ -1,4 +1,6 @@
-﻿namespace AssetAccounting
+﻿using System;
+
+namespace AssetAccounting
 {
     // BlockFi has two file types available: the transaction report and the trading report.
     //
@@ -28,16 +30,15 @@
         public override Transaction ParseFields(IList<string> fields, string serviceName, string accountName)
         {
             string itemType = fields[0];
-            decimal currencyAmount = Convert.ToDecimal(fields[1]);
+            decimal currencyAmount = Decimal.Parse(fields[1]);
             TransactionTypeEnum transactionType = GetTransactionType(fields[2]);
             DateTime dateAndTime = DateTime.Parse(fields[3]);
 
             const string vault = "";
             const string transactionID = "";
 
-
             CurrencyUnitEnum currencyUnit = CurrencyUnitEnum.USD; //GetCurrencyUnit(fields[5]);
-            decimal weight = Convert.ToDecimal(fields[6]);
+            decimal weight = Decimal.Parse(fields[6]);
             AssetMeasurementUnitEnum weightUnit = GetWeightUnit(fields[7]);
 
             decimal amountPaid = 0.0m, amountReceived = 0.0m;
@@ -60,11 +61,12 @@
             else
                 throw new Exception("Unknown transaction type " + transactionType);
 
+            decimal spotPrice = Math.Abs(currencyAmount / weight);
             AssetTypeEnum assetType = GetAssetType(fields[8]);
 
             return new Transaction(serviceName, accountName, dateAndTime,
                 transactionID, transactionType, vault, amountPaid, currencyUnit, amountReceived,
-                weightUnit, assetType, "", itemType);
+                weightUnit, assetType, "", itemType, spotPrice);
         }
 
         private static CurrencyUnitEnum GetCurrencyUnit(string currencyUnit)

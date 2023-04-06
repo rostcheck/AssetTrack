@@ -95,6 +95,11 @@ namespace AssetAccounting
 				{
 					fields = line.Split(','); // Could be CSV
 				}
+				for (var i = 0; i < fields.Length; i++)
+				{
+					if (fields[i] == "\"\"")
+						fields[i] = "";
+				}
 				if (string.Join("", fields) == string.Empty || line.Contains("Number of transactions ="))
 				{
 					line = reader.ReadLine();

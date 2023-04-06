@@ -104,7 +104,7 @@
                     continue; // Already processed it
 
                 // Find the source and receipt sides
-                Transaction? sourceTransaction = GetSourceTransaction(transaction, transactionList);
+                Transaction? sourceTransaction = GetSourceTransactionCrypto(transaction, transactionList);
                 if (sourceTransaction is null)
                     throw new Exception("Could not match source transaction for transfer " + transaction.TransactionID);
                 if (sourceTransaction.AmountPaid == 0.0m && sourceTransaction.TransactionType != TransactionTypeEnum.TransferOut)
@@ -124,7 +124,7 @@
 						sourceTransaction.DateAndTime, sourceTransaction.TransactionID, TransactionTypeEnum.StorageFeeInAsset,
 						sourceTransaction.Vault, amountDifference, sourceTransaction.CurrencyUnit, 0.0m, 
 						sourceTransaction.MeasurementUnit, sourceTransaction.AssetType, 
-						"Transfer fee (in asset) from " + sourceTransaction.Memo, transaction.ItemType);
+						"Transfer fee (in asset) from " + sourceTransaction.Memo, transaction.ItemType, sourceTransaction.SpotPrice);
 					transactionList.Add(storageFee);
 				}
 
@@ -141,7 +141,45 @@
 			return transactionList;
 		}
 
-		private Transaction? GetSourceTransaction(Transaction transaction, List<Transaction> transactionList)
+		// Modified crypto rules for finding transaction pairs
+        private Transaction? GetSourceTransactionCrypto(Transaction transaction, List<Transaction> transactionList)
+        {
+            Transaction? sourceTransaction = null;
+            if (transaction.TransactionType == TransactionTypeEnum.TransferOut)
+                return transaction; // This is the source
+            else
+            {
+				DateTime startTime = transaction.DateAndTime.AddHours(-12.0);
+                DateTime endTime = transaction.DateAndTime.AddHours(12.0);
+				decimal amountMin = transaction.Measure * 0.9m;
+                decimal amountMax = transaction.Measure * 1.1m;
+				// Inferred source (transaction ID not available/trustworthy)
+				var possibles = transactionList.OrderBy(s => s.DateAndTime).Where(
+					s =>
+					s.DateAndTime >= startTime &&
+					s.DateAndTime <= endTime &&
+					s.ItemType == transaction.ItemType &&
+					s.TransactionType == TransactionTypeEnum.TransferOut //&&
+																		 //s.Measure >= amountMin &&
+																		 //s.Measure <= amountMax
+																		 //s.AmountPaid == transaction.AmountReceived
+																		 //s.AmountPaid > 0.0m
+																		 //&& !s.Memo.Contains("Fee")
+					);
+                sourceTransaction = possibles.FirstOrDefault();
+                // Fix generic "Transfer" to indicate direction
+                if (sourceTransaction is not null)
+                {
+                    if (sourceTransaction.TransactionType != TransactionTypeEnum.TransferOut)
+                        sourceTransaction.TransactionType = TransactionTypeEnum.TransferOut;
+                }
+                
+
+            }
+            return sourceTransaction;
+        }
+
+        private Transaction? GetSourceTransaction(Transaction transaction, List<Transaction> transactionList)
 		{
 			Transaction? sourceTransaction = null;
 			if (transaction.TransactionType == TransactionTypeEnum.TransferOut)
@@ -149,15 +187,15 @@
 			else
             {
 				// Explicit source
-				sourceTransaction = transactionList.Where(
+				sourceTransaction = transactionList.OrderBy(s => s.DateAndTime).Where(
 					s => s.TransactionType == TransactionTypeEnum.TransferOut
-					&& s.TransactionID == transaction.TransactionID
-					&& s.Service == transaction.Service
-					&& s.ItemType == transaction.ItemType).FirstOrDefault();
+                    //&& s.TransactionID == transaction.TransactionID // temporarily disable
+                    //&& s.Service == transaction.Service // temporarily disable
+                    && s.ItemType == transaction.ItemType).FirstOrDefault();
 				if (sourceTransaction is not null)
                 {
 					// Inferred source
-					sourceTransaction = transactionList.Where(
+					sourceTransaction = transactionList.OrderBy(s => s.DateAndTime).Where(
 						s => s.TransactionID == transaction.TransactionID
 						&& s.Service == transaction.Service
 						&& s.ItemType == transaction.ItemType
@@ -213,12 +251,13 @@
 		{
 			// Find the open lots in the current vault with the correct asset type
 			List<Lot> availableLots = lots.Where(
-				s => s.Service == transaction.Service
-				&& s.AssetType == transaction.AssetType 
-				&& s.ItemType == transaction.ItemType
-				&& s.Vault == transaction.TransferFromVault
-				&& s.Account == transaction.TransferFromAccount
-				&& s.IsDepleted() == false)
+				s =>
+				// s.Service == transaction.Service &&  // temporarily disable service matching
+				s.AssetType == transaction.AssetType &&
+				s.ItemType == transaction.ItemType &&
+				s.Vault == transaction.TransferFromVault &&
+				s.Account == transaction.TransferFromAccount &&
+				s.IsDepleted() == false)
 				.OrderBy(s => s.PurchaseDate).ToList();
 			AmountInAsset amount = new AmountInAsset(transaction.DateAndTime, transaction.TransactionID, 
 				                       transaction.Vault, transaction.AmountReceived, transaction.MeasurementUnit, 

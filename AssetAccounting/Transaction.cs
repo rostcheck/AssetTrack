@@ -17,11 +17,12 @@
 		public string? TransferFromVault { get; set; }
 		public string? TransferFromAccount { get; set; }
 		public string ItemType { get; set; }
+		public decimal SpotPrice { get; set; }
 
 		public Transaction(string service, string account, DateTime dateAndTime, string transactionID, 
 			TransactionTypeEnum transactionType, string vault, decimal amountPaid, CurrencyUnitEnum currencyUnit, 
 			decimal amountReceived, AssetMeasurementUnitEnum measurementUnit, AssetTypeEnum assetType, string memo, 
-			string itemType)
+			string itemType, decimal spotPrice)
 		{
 			this.Service = service;
 			this.Account = account;
@@ -36,6 +37,7 @@
 			this.AssetType = assetType;
 			this.Memo = memo;
 			this.ItemType = itemType;
+			this.SpotPrice = spotPrice;
 		}
 
 		public decimal Measure
@@ -81,7 +83,7 @@
 		public Transaction Duplicate()
 		{
 			return new Transaction(Service, Account, DateAndTime, TransactionID, TransactionType,
-				Vault, AmountPaid, CurrencyUnit, AmountReceived, MeasurementUnit, AssetType, Memo, ItemType);
+				Vault, AmountPaid, CurrencyUnit, AmountReceived, MeasurementUnit, AssetType, Memo, ItemType, SpotPrice);
 		}
 
 		public void MakeTransfer(string account, string vault)

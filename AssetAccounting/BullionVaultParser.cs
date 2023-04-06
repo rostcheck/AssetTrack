@@ -13,10 +13,10 @@
 			string transactionTypeString = fields[2];
 			TransactionTypeEnum transactionType = GetTransactionType(transactionTypeString);
 			string vault = fields[3];
-			decimal value = Convert.ToDecimal(fields[4]);
-			decimal weight = Convert.ToDecimal(fields[14]);
-			decimal commission = Convert.ToDecimal(fields[15]);
-			decimal consideration = Convert.ToDecimal(fields[16]);
+			decimal value = Decimal.Parse(fields[4]);
+			decimal weight = Decimal.Parse(fields[14]);
+			decimal commission = Decimal.Parse(fields[15]);
+			decimal consideration = Decimal.Parse(fields[16]);
 			decimal totalCompensation = commission + consideration;
 			decimal amountPaid = 0.0m, amountReceived = 0.0m;
 
@@ -38,10 +38,11 @@
 			else
 				throw new Exception("Unknown transaction type " + transactionType);	
 			CurrencyUnitEnum currencyUnit = GetCurrencyUnit(fields[6]);
+			decimal spotPrice = Math.Abs(totalCompensation / weight); 
 
 			return new Transaction("BullionVault", accountName, dateAndTime, 
 				transactionID, transactionType, vault, amountPaid, currencyUnit, amountReceived, 
-				AssetMeasurementUnitEnum.Gram, metalType, "", metalType.ToString());
+				AssetMeasurementUnitEnum.Gram, metalType, "", metalType.ToString(), spotPrice);
 		}
 
 		private static CurrencyUnitEnum GetCurrencyUnit(string currencyUnit)
