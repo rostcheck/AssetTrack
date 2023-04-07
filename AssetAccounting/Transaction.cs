@@ -54,7 +54,7 @@
 					case TransactionTypeEnum.TransferOut:
 					case TransactionTypeEnum.Sale:
 					case TransactionTypeEnum.SaleViaExchange:
-					case TransactionTypeEnum.StorageFeeInAsset:
+					case TransactionTypeEnum.FeeInAsset:
 						return AmountPaid;
 					default:
 						return 0.0m;
@@ -71,7 +71,7 @@
 						break;
 					case TransactionTypeEnum.Sale:
 					case TransactionTypeEnum.SaleViaExchange:
-					case TransactionTypeEnum.StorageFeeInAsset:
+					case TransactionTypeEnum.FeeInAsset:
 						AmountPaid = value;
 						break;
 				}

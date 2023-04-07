@@ -62,10 +62,10 @@
 							transaction.TransferFromAccount, transaction.TransferFromVault, transaction.Account, transaction.Vault));
 						ProcessTransfer(transaction);
 							break;
-					case TransactionTypeEnum.StorageFeeInCurrency:
+					case TransactionTypeEnum.FeeInCurrency:
 						ApplyStorageFeeInCurrency(transaction);
 						break;
-					case TransactionTypeEnum.StorageFeeInAsset:
+					case TransactionTypeEnum.FeeInAsset:
 						ApplyFeeInAsset(transaction);
 						break;
 				}
@@ -121,8 +121,9 @@
                                                    receiveTransaction.MeasurementUnit, sourceTransaction.MeasurementUnit);
 					// Create a storage fee to account for the difference
 					Transaction storageFee = new Transaction(sourceTransaction.Service, sourceTransaction.Account,
-						sourceTransaction.DateAndTime, sourceTransaction.TransactionID, TransactionTypeEnum.StorageFeeInAsset,
-						sourceTransaction.Vault, amountDifference, sourceTransaction.CurrencyUnit, 0.0m, 
+						sourceTransaction.DateAndTime, NewTransactionId(sourceTransaction.TransactionID, transactionList),
+						TransactionTypeEnum.FeeInAsset,sourceTransaction.Vault, amountDifference,
+						sourceTransaction.CurrencyUnit, 0.0m, 
 						sourceTransaction.MeasurementUnit, sourceTransaction.AssetType, 
 						"Transfer fee (in asset) from " + sourceTransaction.Memo, transaction.ItemType, sourceTransaction.SpotPrice);
 					transactionList.Add(storageFee);
@@ -140,6 +141,22 @@
 			}
 			return transactionList;
 		}
+
+		// Generate a new transaction id for a transaction synthesized out of another transaction) and insure it
+		// is unique
+		private string NewTransactionId(string oldTransactionId, IList<Transaction> transactions)
+		{
+			bool unique = false;
+			int counter = 1;
+			string newTransactionId = "";
+			do
+			{
+				newTransactionId = string.Format("{0}-{1}", oldTransactionId, counter++);
+				unique = (transactions.Where(s => s.TransactionID == newTransactionId).FirstOrDefault() == null);
+			}
+			while (!unique);
+			return newTransactionId;
+        }
 
 		// Modified crypto rules for finding transaction pairs
         private Transaction? GetSourceTransactionCrypto(Transaction transaction, List<Transaction> transactionList)
@@ -337,7 +354,7 @@
 
 		private void ApplyFeeInAsset(Transaction transaction)
 		{
-			if (transaction.TransactionType != TransactionTypeEnum.StorageFeeInAsset)
+			if (transaction.TransactionType != TransactionTypeEnum.FeeInAsset)
 				throw new Exception("Wrong transaction type " + transaction.TransactionType + " passed to ApplyFeeInAsset");
 
 			AmountInAsset fee = new AmountInAsset(transaction.DateAndTime, transaction.TransactionID, 
@@ -373,7 +390,7 @@
 
 		private void ApplyStorageFeeInCurrency(Transaction transaction)
 		{
-			if (transaction.TransactionType != TransactionTypeEnum.StorageFeeInCurrency)
+			if (transaction.TransactionType != TransactionTypeEnum.FeeInCurrency)
 				throw new Exception("Wrong transaction type " + transaction.TransactionType + " passed to ApplyStorageFeeInCurrency");
 
 			// Storage fee can apply to any lot closed within the month
@@ -397,4 +414,3 @@
 		}
 	}
 }
-

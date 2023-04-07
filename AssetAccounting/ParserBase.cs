@@ -119,7 +119,11 @@ namespace AssetAccounting
 			string accountName = ParseAccountNameFromFilename(fileName, serviceName);
 			List<Transaction> transactionList = new List<Transaction>();
 			var csv = File.ReadAllText(fileName);
-			foreach (var readFields in CsvReader.ReadFromText(csv))
+			var options = new CsvOptions();
+			options.AllowSingleQuoteToEncloseFieldValues = true;
+			options.RowsToSkip = this.headerLines;
+			options.HeaderMode = HeaderMode.HeaderAbsent; // handle via RowsToSkip
+			foreach (var readFields in CsvReader.ReadFromText(csv, options))
 			{
 				List<string> fields = new List<string>(readFields.ColumnCount);
 				for (int i = 0; i < readFields.ColumnCount; i++)

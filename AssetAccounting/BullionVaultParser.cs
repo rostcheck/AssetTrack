@@ -33,7 +33,7 @@
 				amountPaid = weight;
 				amountReceived = totalCompensation;
 			}
-			else if (transactionType == TransactionTypeEnum.StorageFeeInCurrency)
+			else if (transactionType == TransactionTypeEnum.FeeInCurrency)
 				amountPaid = Math.Abs(value);
 			else
 				throw new Exception("Unknown transaction type " + transactionType);	
@@ -82,7 +82,7 @@
 				case "sell":
 					return TransactionTypeEnum.Sale;
 				case "storage_fee":
-					return TransactionTypeEnum.StorageFeeInCurrency;
+					return TransactionTypeEnum.FeeInCurrency;
 				default:
 					throw new Exception("Transaction type " + transactionType + " not recognized");
 			}

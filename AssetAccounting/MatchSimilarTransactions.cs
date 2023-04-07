@@ -36,7 +36,7 @@
 						receiveTransaction.MeasurementUnit, sourceTransaction.MeasurementUnit);
 					// Create an asset storage fee to account for the difference
 					Transaction storageFee = new Transaction(sourceTransaction.Service, sourceTransaction.Account,
-						sourceTransaction.DateAndTime, sourceTransaction.TransactionID, TransactionTypeEnum.StorageFeeInAsset,
+						sourceTransaction.DateAndTime, sourceTransaction.TransactionID, TransactionTypeEnum.FeeInAsset,
 						sourceTransaction.Vault, amountDifference, sourceTransaction.CurrencyUnit, 0.0m, 
 						sourceTransaction.MeasurementUnit, sourceTransaction.AssetType, 
 						"Transfer fee (in asset) from like-kind exchange " + sourceTransaction.TransactionID, "Generic",

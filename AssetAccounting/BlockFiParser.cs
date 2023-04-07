@@ -56,7 +56,7 @@ namespace AssetAccounting
                 amountReceived = weight;
             else if (transactionType == TransactionTypeEnum.TransferOut)
                 amountPaid = weight;
-            else if (transactionType == TransactionTypeEnum.StorageFeeInCurrency)
+            else if (transactionType == TransactionTypeEnum.FeeInCurrency)
                 amountPaid = Math.Abs(currencyAmount);
             else
                 throw new Exception("Unknown transaction type " + transactionType);
@@ -125,7 +125,7 @@ namespace AssetAccounting
                     return TransactionTypeEnum.Sale;
                 case "storage_fee":
                 case "storage fee":
-                    return TransactionTypeEnum.StorageFeeInCurrency;
+                    return TransactionTypeEnum.FeeInCurrency;
                 case "send":
                     return TransactionTypeEnum.TransferOut;
                 case "receive":

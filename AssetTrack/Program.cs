@@ -42,7 +42,7 @@ namespace AssetTrack
 			}
 			transactionList = transactionList.OrderBy(s => s.DateAndTime).ToList();
 			//storageService.ApplyTransactions(transactionList);
-			//PrintResults(storageService);
+			PrintResults(storageService);
 			DumpTransactions("tm-transactions.txt", transactionList);
 			//ExportLots(storageService.Lots, "tm-lots.txt");
 			//ExportHoldings(storageService.Lots, "tm-holdings.txt");
@@ -159,7 +159,7 @@ namespace AssetTrack
 					transaction.Measure, transaction.MeasurementUnit, transaction.ItemType,
 					transaction.Account, transaction.AmountPaid, transaction.AmountReceived,
 					transaction.CurrencyUnit, transaction.Vault, transaction.TransactionID, transaction.SpotPrice,
-					transaction.Memo);
+					string.Format("\"{0}\"", transaction.Memo));
 				sw.WriteLine(formatted);
 			}
 			sw.Close();

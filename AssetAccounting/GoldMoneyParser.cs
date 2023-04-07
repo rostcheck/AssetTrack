@@ -192,7 +192,7 @@ namespace AssetAccounting
 				case "account fee":
 				case "storage fee":
 				case "payment fee":
-					return TransactionTypeEnum.StorageFeeInAsset;
+					return TransactionTypeEnum.FeeInAsset;
 				case "buy metal":
 					return TransactionTypeEnum.Purchase;
 				case "sell metal":

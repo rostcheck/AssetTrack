@@ -67,11 +67,15 @@ namespace AssetAccounting
                 amountReceived = amount;
             else if (transactionType == TransactionTypeEnum.TransferOut)
                 amountPaid = amount;
-            else if (transactionType == TransactionTypeEnum.StorageFeeInCurrency)
-                amountPaid = Math.Abs(currencyAmount);
-            else if (transactionType != TransactionTypeEnum.IncomeInCurrency) // ignore interest
+            else if (transactionType == TransactionTypeEnum.FeeInCurrency)
+                amountPaid = Math.Abs(currencyAmount);           
+            else if (transactionType == TransactionTypeEnum.IncomeInCurrency)
+                amountReceived = Math.Abs(currencyAmount);
+            else
                 throw new Exception("Unknown transaction type " + transactionType);
             decimal? spotPrice = Utils.GetSpotPrice(currencyAmount, amount);
+            if (spotPrice == null && itemType.Contains("USDC"))
+                spotPrice = 1.0m; // Set USDC stablecoins to 1.0
 
             return new Transaction(serviceName, accountName, dateAndTime,
                 transactionID, transactionType, vault, amountPaid, currencyUnit, amountReceived,
@@ -119,10 +123,10 @@ namespace AssetAccounting
                 case "advanced trade sell":
                     return TransactionTypeEnum.Sale;
                 case "rewards income":
-                    return TransactionTypeEnum.IncomeInCurrency;
+                    return TransactionTypeEnum.IncomeInAsset;
                 case "storage_fee":
                 case "storage fee":
-                    return TransactionTypeEnum.StorageFeeInCurrency;
+                    return TransactionTypeEnum.FeeInCurrency;
                 case "send":
                     return TransactionTypeEnum.TransferOut;
                 case "receive":

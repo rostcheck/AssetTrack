@@ -69,6 +69,7 @@ namespace AssetAccounting
                 }
                 else if (inputTransactionType == "withdrawal")
                 {
+                    thisLineAmount = Math.Abs(thisLineAmount); // CoinbasePro records withdrawals as negatives
                     // ignore currency withdrawal
                     if (thisAssetType == "USD")
                     {
@@ -154,7 +155,7 @@ namespace AssetAccounting
             else if (transactionType == TransactionTypeEnum.TransferIn)
                 return string.Format("Transferred in {0:0.000000} {1}", amountReceived, itemType);
             else if (transactionType == TransactionTypeEnum.TransferOut)
-                return string.Format("Transferred out {0:0.000000} {1}", amountReceived, itemType);
+                return string.Format("Transferred out {0:0.000000} {1}", amountPaid, itemType);
             else
                 throw new Exception("Unsupported transaction type: " + transactionType.ToString());
 

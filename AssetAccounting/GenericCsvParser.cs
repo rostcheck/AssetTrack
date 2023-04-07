@@ -51,9 +51,9 @@
 			}
 			else if (transactionType == TransactionTypeEnum.TransferIn)
 				amountReceived = weight;
-			else if (transactionType == TransactionTypeEnum.TransferOut)
+			else if (transactionType == TransactionTypeEnum.TransferOut || transactionType == TransactionTypeEnum.FeeInAsset)
 				amountPaid = weight;
-			else if (transactionType == TransactionTypeEnum.StorageFeeInCurrency)
+			else if (transactionType == TransactionTypeEnum.FeeInCurrency)
 				amountPaid = Math.Abs(currencyAmount);
 			else 
 				throw new Exception("Unknown transaction type " + transactionType);
@@ -120,10 +120,11 @@
 					return TransactionTypeEnum.Purchase;
 				case "sell":
 					return TransactionTypeEnum.Sale;
-				case "storage_fee":
-				case "storage fee":
-					return TransactionTypeEnum.StorageFeeInCurrency;
-				case "send":
+				case "feeincurrency":
+					return TransactionTypeEnum.FeeInCurrency;
+                case "feeinasset":
+                    return TransactionTypeEnum.FeeInAsset;
+                case "send":
 					return TransactionTypeEnum.TransferOut;
 				case "receive":
 					return TransactionTypeEnum.TransferIn;

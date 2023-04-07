@@ -2,8 +2,8 @@
 {
 	public enum TransactionTypeEnum
 	{
-		StorageFeeInAsset,
-		StorageFeeInCurrency,
+		FeeInAsset,
+		FeeInCurrency,
 		Purchase,
 		PurchaseViaExchange, // Heterogenous asset-to-asset exchange (ex. gold-to-silver) forces a sale and purchase
         Sale,
