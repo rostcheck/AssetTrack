@@ -41,7 +41,7 @@ namespace AssetTrack
 				}
 			}
 			transactionList = transactionList.OrderBy(s => s.DateAndTime).ToList();
-			//storageService.ApplyTransactions(transactionList);
+			storageService.ApplyTransactions(transactionList);
 			PrintResults(storageService);
 			DumpTransactions("tm-transactions.txt", transactionList);
 			//ExportLots(storageService.Lots, "tm-lots.txt");

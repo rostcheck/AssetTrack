@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using static AssetAccounting.Utils;
 
 namespace AssetAccounting
 {
@@ -116,28 +117,12 @@ namespace AssetAccounting
                 }
                 else throw new Exception("Unrecognized transaction type: " + inputTransactionType);
 
-                decimal amountPaid = 0.0m, amountReceived = 0.0m;
-                if (transactionType == TransactionTypeEnum.Purchase )
-                {
-                    amountPaid = Math.Abs(currencyAmount);
-                    amountReceived = Math.Abs(assetAmount);
-                }
-                else if (transactionType == TransactionTypeEnum.Sale)
-                {
-                    amountPaid = Math.Abs(assetAmount);
-                    amountReceived = Math.Abs(currencyAmount);
-                }
-                else if (transactionType == TransactionTypeEnum.TransferIn)
-                    amountReceived = thisLineAmount;
-                else if (transactionType == TransactionTypeEnum.TransferOut)
-                    amountPaid = thisLineAmount;
-                else 
-                    throw new Exception("Unknown transaction type " + transactionType);
+                var a = Utils.GetAmounts(transactionType, assetAmount, currencyAmount);
                 decimal? spotPrice = Utils.GetSpotPrice(currencyAmount, assetAmount);
 
-                string memo = FormMemo(transactionType, amountPaid, amountReceived, itemType);
+                string memo = FormMemo(transactionType, a.amountPaid, a.amountReceived, itemType);
                 transactions.Add(new Transaction(serviceName, accountName, dateAndTime,
-                    transactionId, transactionType, vault, amountPaid, currencyUnit, amountReceived,
+                    transactionId, transactionType, vault, a.amountPaid, currencyUnit, a.amountReceived,
                     measurementUnit, assetType, memo, itemType, spotPrice));
                 lineNumber++;
             }

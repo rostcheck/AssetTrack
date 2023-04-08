@@ -52,4 +52,26 @@ public class ParserTests
         Assert.AreEqual("CoinbasePro", transactions[0].Service);
         Assert.AreEqual("Bought 0.005300 BTC for 246.62 USD", transactions[0].Memo);
     }
+
+    [TestMethod]
+    public void TestCelsiusParser()
+    {
+        var parser = new CelsiusParser();
+        var transactions = parser.Parse("../../../Celsius-test-buytest.csv");
+        Assert.AreEqual(2, transactions.Count);
+        Assert.AreEqual("test", transactions[0].Account);
+        Assert.AreEqual(9.545224512m, transactions[0].AmountPaid);
+        Assert.AreEqual(0.000471004m, transactions[0].AmountReceived);
+        Assert.AreEqual("Celsius", transactions[0].Service);
+        Assert.AreEqual("BTC", transactions[0].ItemType);
+        Assert.AreEqual(TransactionTypeEnum.IncomeInAsset, transactions[0].TransactionType);
+        Assert.AreEqual("Reward, receive 0.000471 BTC valued at 9.55 USD", transactions[0].Memo);
+        Assert.AreEqual("test", transactions[1].Account);
+        Assert.AreEqual(0.0m, transactions[1].AmountPaid);
+        Assert.AreEqual(0.27m, transactions[1].AmountReceived);
+        Assert.AreEqual("Celsius", transactions[1].Service);
+        Assert.AreEqual("ETH", transactions[1].ItemType);
+        Assert.AreEqual(TransactionTypeEnum.TransferIn, transactions[1].TransactionType);
+        Assert.AreEqual("Transferred in 0.270000 ETH", transactions[1].Memo);
+    }
 }

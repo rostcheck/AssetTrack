@@ -93,25 +93,6 @@ namespace AssetAccounting
             }
         }
 
-        private static AssetTypeEnum GetAssetType(string assetType)
-        {
-            switch (assetType.ToLower())
-            {
-                case "gold":
-                    return AssetTypeEnum.Gold;
-                case "silver":
-                    return AssetTypeEnum.Silver;
-                case "platinum":
-                    return AssetTypeEnum.Platinum;
-                case "palladium":
-                    return AssetTypeEnum.Palladium;
-                case "crypto":
-                    return AssetTypeEnum.Crypto;
-                default:
-                    throw new Exception("Unrecognized asset type " + assetType);
-            }
-        }
-
         private static TransactionTypeEnum GetTransactionType(string transactionType)
         {
             switch (transactionType.ToLower())
@@ -125,7 +106,6 @@ namespace AssetAccounting
                 case "rewards income":
                     return TransactionTypeEnum.IncomeInAsset;
                 case "storage_fee":
-                case "storage fee":
                     return TransactionTypeEnum.FeeInCurrency;
                 case "send":
                     return TransactionTypeEnum.TransferOut;
