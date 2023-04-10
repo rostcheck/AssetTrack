@@ -15,10 +15,7 @@ namespace AssetTrack
 
 			ConsoleLogWriter writer = new ConsoleLogWriter();
 			AssetStorageService storageService = new AssetStorageService(writer);
-			GoldMoneyParser goldMoneyParser = new GoldMoneyParser();
-			BullionVaultParser bullionVaultParser = new BullionVaultParser();
-			GenericCsvParser genericCsvParser = new GenericCsvParser();
-			CoinbaseParser coinbaseParser = new CoinbaseParser();
+
 			CoinbaseProParser coinbaseProParser = new CoinbaseProParser();
 			List<Transaction> transactionList = new List<Transaction>();
 			foreach (string filename in args)
@@ -28,20 +25,12 @@ namespace AssetTrack
 				else
 				{
 					Console.WriteLine("Read transactions from {0}", filename);
-					if (filename.Contains("GoldMoney"))
-						transactionList.AddRange(goldMoneyParser.Parse(filename));
-					else if (filename.Contains("BullionVault"))
-						transactionList.AddRange(bullionVaultParser.Parse(filename));
-                    else if (filename.Contains("CoinbasePro"))
-                        transactionList.AddRange(coinbaseProParser.Parse(filename));
-                    else if (filename.Contains("Coinbase"))
-                        transactionList.AddRange(coinbaseParser.Parse(filename));
-                    else
-						transactionList.AddRange(genericCsvParser.Parse(filename));
+                    var parser = ParserFactory.GetParser(filename);
+					transactionList.AddRange(parser.Parse(filename));
 				}
 			}
 			transactionList = transactionList.OrderBy(s => s.DateAndTime).ToList();
-			storageService.ApplyTransactions(transactionList);
+			//storageService.ApplyTransactions(transactionList);
 			PrintResults(storageService);
 			DumpTransactions("tm-transactions.txt", transactionList);
 			//ExportLots(storageService.Lots, "tm-lots.txt");

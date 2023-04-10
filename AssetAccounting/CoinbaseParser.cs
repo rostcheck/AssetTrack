@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 
 namespace AssetAccounting
 {
@@ -28,7 +29,8 @@ namespace AssetAccounting
             // 8: Fees and/or Spread	
             // 9: Notes
 
-            DateTime dateAndTime = DateTime.Parse(fields[0]);
+            DateTime dateAndTime = DateTime.Parse(fields[0], CultureInfo.InvariantCulture,
+                    DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal);
             TransactionTypeEnum transactionType = GetTransactionType(fields[1]);
             string itemType = fields[2];
             decimal amount = Decimal.Parse(fields[3],System.Globalization.NumberStyles.Any);

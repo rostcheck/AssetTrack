@@ -20,7 +20,7 @@
 			// 9: ignored
 			// 10: memo
 			// 11: item type
-			DateTime dateAndTime = DateTime.Parse(fields[0]);
+			DateTime dateAndTime = DateTime.Parse(fields[0]).ToUniversalTime();
 			string vault = fields[1];
 			string transactionID = fields[2];
 			string transactionTypeString = fields[3];

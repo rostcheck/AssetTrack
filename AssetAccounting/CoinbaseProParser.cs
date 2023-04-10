@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Globalization;
 using static AssetAccounting.Utils;
 
 namespace AssetAccounting
@@ -38,7 +39,8 @@ namespace AssetAccounting
                 string[] fields = line.Split(',');
                 string currentTradeId = fields[7];
                 string thisAssetType = fields[5];
-                DateTime dateAndTime = DateTime.Parse(fields[2]);
+                DateTime dateAndTime = DateTime.Parse(fields[2], CultureInfo.InvariantCulture,
+                    DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal);
                 string transactionId = fields[7];
                 string vault = "CoinbasePro-" + accountName;
                 if (transactionId == "")
@@ -66,7 +68,10 @@ namespace AssetAccounting
                         continue;
                     }
                     else
+                    {
                         transactionType = TransactionTypeEnum.TransferIn;
+                        assetAmount = thisLineAmount;
+                    }
                 }
                 else if (inputTransactionType == "withdrawal")
                 {
@@ -78,7 +83,10 @@ namespace AssetAccounting
                         continue;
                     }
                     else
+                    {
                         transactionType = TransactionTypeEnum.TransferOut;
+                        assetAmount = thisLineAmount;
+                    }
                 }
                 else if (inputTransactionType == "match")
                 {

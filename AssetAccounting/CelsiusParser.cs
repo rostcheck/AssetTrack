@@ -25,7 +25,12 @@ namespace AssetAccounting
             // 8: Confirmed
 
             string transactionID = fields[0];
-            DateTime dateAndTime = DateTime.Parse(fields[1]);
+            //var offset = new DateTimeOffset(
+            DateTime dt = DateTime.Parse(fields[1]);
+            DateTime dateAndTime = DateTime.SpecifyKind(dt, DateTimeKind.Utc); //TimeZoneInfo.ConvertTimeToUtc(
+                
+            //, DateTimeOffset)
+            //        TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time"));
 
             string itemType = fields[3];
             decimal assetAmount = Decimal.Parse(fields[4], System.Globalization.NumberStyles.Any);
