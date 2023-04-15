@@ -30,11 +30,12 @@ namespace AssetTrack
 				}
 			}
 			transactionList = transactionList.OrderBy(s => s.DateAndTime).ToList();
-			//storageService.ApplyTransactions(transactionList);
+            DumpTransactions("tm-transactions.txt", transactionList);
+            storageService.ApplyTransactions(transactionList);
 			PrintResults(storageService);
 			DumpTransactions("tm-transactions.txt", transactionList);
-			//ExportLots(storageService.Lots, "tm-lots.txt");
-			//ExportHoldings(storageService.Lots, "tm-holdings.txt");
+			ExportLots(storageService.Lots, "tm-lots.txt");
+			ExportHoldings(storageService.Lots, "tm-holdings.txt");
 		}
 
 		private static void ProcessCommand(string command, AssetStorageService storageService)
@@ -138,7 +139,7 @@ namespace AssetTrack
 		{
 			StreamWriter sw = new StreamWriter(filename);
 			sw.WriteLine("Date\tService\tType\tAsset\tMeasure\tUnit\tItemType\tAccount\tAmountPaid\tAmountReceived\tCurrency\tVault\tTransactionId\tSpotPrice\tMemo");
-			string formatString = "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\t{11}\t{12}\t{13}\t{14}";
+			string formatString = "\"{0}\"\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\t{11}\t{12}\t{13}\t{14}";
 
 			foreach (var transaction in transactions.OrderBy(s => s.DateAndTime).ToList())
 			{

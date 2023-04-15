@@ -15,6 +15,8 @@ namespace AssetAccounting
                 return new CoinbaseParser();
             else if (filename.Contains("Celsius"))
                 return new CelsiusParser();
+            else if (filename.Contains("BlockFi"))
+                return new BlockFiParser();
             else
                 return new GenericCsvParser();
         }

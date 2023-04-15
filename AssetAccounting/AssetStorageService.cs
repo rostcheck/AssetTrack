@@ -31,16 +31,18 @@
 
 		public void ApplyTransactions(List<Transaction> transactionList)
 		{
-			transactionList = FormTransfers(transactionList);
-			//transactionList = MatchAlgorithmFactory.Create(MatchAlgorithmEnum.MatchAcrossTransactions)
-			//	.FormLikeKindExchanges(transactionList, logWriter);
-			foreach (Transaction transaction in transactionList.OrderBy(s => s.DateAndTime))
+			transactionList = ScrubDuplicateTransactions(transactionList);
+			(transactionList, var problemTransactions) = FormTransfers(transactionList);
+			DumpTransactions("tm-no-match-transfers.txt", problemTransactions);
+            //transactionList = MatchAlgorithmFactory.Create(MatchAlgorithmEnum.MatchAcrossTransactions)
+            //	.FormLikeKindExchanges(transactionList, logWriter);
+            foreach (Transaction transaction in transactionList.OrderBy(s => s.DateAndTime))
 			{
 				switch (transaction.TransactionType)
 				{
 					case TransactionTypeEnum.Purchase:
 					case TransactionTypeEnum.PurchaseViaExchange:
-						logWriter.WriteEntry(string.Format("{0} {1} received {2:0.000000} {3}s {4} ({5}) to account {6} vault {7}", 
+						logWriter.WriteEntry(string.Format("{0} {1} purchased {2:0.000000} {3}s {4} ({5}) to account {6} vault {7}", 
 							transaction.DateAndTime.ToShortDateString(), transaction.Service, transaction.AmountReceived, 
 							transaction.MeasurementUnit.ToString().ToLower(), transaction.AssetType.ToString().ToLower(),
 							transaction.ItemType, transaction.Account, transaction.Vault));
@@ -93,9 +95,10 @@
 		}
 
         // For transfers, combine both sides into one transaction
-        private List<Transaction> FormTransfers(List<Transaction> transactionList)
+        private (List<Transaction> processedTransactions, List<Transaction> problemTransactions) FormTransfers(List<Transaction> transactionList)
         {
             List<Transaction> sourceTransactions = new List<Transaction>();
+			List<Transaction> unmatchedTransfers = new List<Transaction>();
             var transferTransactionList = transactionList.Where(
                 s => s.TransactionType == TransactionTypeEnum.TransferIn);
             foreach (Transaction transaction in transferTransactionList.OrderBy(s => s.DateAndTime))
@@ -106,7 +109,12 @@
                 // Find the source and receipt sides
                 Transaction? sourceTransaction = GetSourceTransactionCrypto(transaction, transactionList);
                 if (sourceTransaction is null)
-                    throw new Exception("Could not match source transaction for transfer " + transaction.TransactionID);
+				{
+					unmatchedTransfers.Add(transaction);
+					transactionList.Remove(transaction);
+					continue;
+				}
+                    //throw new Exception("Could not match source transaction for transfer " + transaction.TransactionID);
                 if (sourceTransaction.AmountPaid == 0.0m && sourceTransaction.TransactionType != TransactionTypeEnum.TransferOut)
                     throw new Exception("Found incorrect source transaction for transfer " + transaction.TransactionID);
                 Transaction? receiveTransaction = GetReceiveTransaction(transaction, transactionList);
@@ -130,7 +138,7 @@
 				}
 
 				// Set the source vault property in the receipt side
-				receiveTransaction.MakeTransfer(sourceTransaction.Account, sourceTransaction.Vault);
+				receiveTransaction.MakeTransfer(sourceTransaction.Service, sourceTransaction.Account, sourceTransaction.Vault);
 				sourceTransactions.Add(sourceTransaction);
 			}
 
@@ -139,8 +147,9 @@
 				// Throw away the source side
 				transactionList.Remove(sourceTransaction);
 			}
-			return transactionList;
-		}
+			return (transactionList, unmatchedTransfers);
+
+        }
 
 		// Generate a new transaction id for a transaction synthesized out of another transaction) and insure it
 		// is unique
@@ -158,6 +167,31 @@
 			return newTransactionId;
         }
 
+		// Coinbase Pro files include transfer transactions that also appear on Coinbase as outbound transactions
+		private List<Transaction> ScrubDuplicateTransactions(IList<Transaction> transactionList)
+		{
+            List<Transaction> outputTransactions = new List<Transaction>();
+			foreach (Transaction sourceTransaction in transactionList)
+			{
+				if (sourceTransaction.TransactionType == TransactionTypeEnum.TransferOut &&
+					sourceTransaction.Service == "CoinbasePro")
+				{
+					// If we find another transfer in Coinbase with the exact same amount on the same day, filter the
+					// one from Coinbase Pro
+					var duplicate = transactionList.Where(s => s.TransactionType == TransactionTypeEnum.TransferOut
+						&& s.DateAndTime.Date == sourceTransaction.DateAndTime.Date
+						&& s.AmountPaid == sourceTransaction.AmountPaid
+						&& s.Service == "Coinbase"
+						).FirstOrDefault();
+					if (duplicate != null)
+						continue;
+
+				}
+				outputTransactions.Add(sourceTransaction);
+			}
+			return outputTransactions;
+        }
+
 		// Modified crypto rules for finding transaction pairs
         private Transaction? GetSourceTransactionCrypto(Transaction transaction, List<Transaction> transactionList)
         {
@@ -166,8 +200,8 @@
                 return transaction; // This is the source
             else
             {
-				DateTime startTime = transaction.DateAndTime.AddHours(-12.0);
-                DateTime endTime = transaction.DateAndTime.AddHours(12.0);
+				DateTime startTime = transaction.DateAndTime.AddHours(-5.0);
+                DateTime endTime = transaction.DateAndTime.AddHours(5.0);
 				decimal amountMin = transaction.Measure * 0.9m;
                 decimal amountMax = transaction.Measure * 1.1m;
 				// Inferred source (transaction ID not available/trustworthy)
@@ -284,12 +318,12 @@
 				if (lot.CurrentAmount(amount.MeasurementUnit) >= amount.Amount)
 				{
 					if (transaction.TransferFromAccount is null)
-						throw new Exception("Poorly formatted transactin in ProcessTransfer - missing TransferFromAccount");
+						throw new Exception("Poorly formatted transaction in ProcessTransfer - missing TransferFromAccount");
                     if (transaction.TransferFromVault is null)
-                        throw new Exception("Poorly formatted transactin in ProcessTransfer - missing TransferFromVault");
+                        throw new Exception("Poorly formatted transaction in ProcessTransfer - missing TransferFromVault");
 
                     // Split lot and transfer part of it
-                    Lot newLot = new Lot(lot.Service, lot.LotID + "-split", lot.PurchaseDate, amount.Amount, amount.MeasurementUnit, 
+                    Lot newLot = new Lot(transaction.Service, lot.LotID + "-split", lot.PurchaseDate, amount.Amount, amount.MeasurementUnit, 
 						lot.OriginalPrice, lot.AssetType, transaction.Vault, transaction.Account, transaction.ItemType);
 					lots.Add(newLot);
 					// Remove from original lot
@@ -302,6 +336,7 @@
 				{
 					// Just reassign entire lot to other vault
 					lot.Vault = transaction.Vault;
+					lot.Service = transaction.Service;
 					amount.Decrease(lot.CurrentAmount(lot.measurementUnit), lot.measurementUnit); // some transfer remaining
 				}
 			}
@@ -317,12 +352,13 @@
 			decimal originalMeasureToSell = Utils.ConvertMeasurementUnit(transaction.AmountPaid, transaction.MeasurementUnit, targetMeasurementUnit);
 			AssetAmount remainingAmountToSell = new AssetAmount(transaction.AmountPaid, transaction.AssetType, transaction.MeasurementUnit, transaction.ItemType);
 			List<Lot> availableLots = lots.Where(
-				s => s.Service == transaction.Service
-				&& s.AssetType == transaction.AssetType
-				&& s.ItemType == transaction.ItemType
-				&& s.Account == transaction.Account
-				//&& s.Vault == transaction.Vault // where it is doesn't affect lot accounting
-				&& s.IsDepleted() == false)
+				s =>
+				s.Service == transaction.Service &&
+				s.AssetType == transaction.AssetType &&
+				s.ItemType == transaction.ItemType &&
+				// s.Account == transaction.Account &&
+				//s.Vault == transaction.Vault  && // where it is doesn't affect lot accounting
+				s.IsDepleted() == false)
 				.OrderBy(s => s.PurchaseDate).ToList();
 			
 			foreach(Lot lot in availableLots)

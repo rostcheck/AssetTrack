@@ -16,7 +16,8 @@
 		public AssetTypeEnum AssetType { get; set; }
 		public string? TransferFromVault { get; set; }
 		public string? TransferFromAccount { get; set; }
-		public string ItemType { get; set; }
+        public string? TransferFromService { get; set; }
+        public string ItemType { get; set; }
 		public decimal? SpotPrice { get; set; }
 
 		public Transaction(string service, string account, DateTime dateAndTime, string transactionID, 
@@ -89,9 +90,10 @@
 				Vault, AmountPaid, CurrencyUnit, AmountReceived, MeasurementUnit, AssetType, Memo, ItemType, SpotPrice);
 		}
 
-		public void MakeTransfer(string account, string vault)
+		public void MakeTransfer(string service, string account, string vault)
 		{
 			this.TransactionType = TransactionTypeEnum.TransferIn;
+			this.TransferFromService = service;
 			this.TransferFromAccount = account;
 			this.TransferFromVault = vault;
 		}

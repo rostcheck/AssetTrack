@@ -15,7 +15,7 @@ namespace AssetAccounting
     {
         int recordCount = 0;
 
-        public CoinbaseProParser() : base("Coinbase", 1, true)
+        public CoinbaseProParser() : base("CoinbasePro", 1, true)
         {
         }
 
@@ -88,12 +88,12 @@ namespace AssetAccounting
                         assetAmount = thisLineAmount;
                     }
                 }
-                else if (inputTransactionType == "match")
+                else if (inputTransactionType == "match" || inputTransactionType == "conversion")
                 {
-                    // Assemble a transaction from multiple lines
+                    // Assemble a transaction from multiple lines for non-conversion matches
                     lineNumber++;
                     var nextLineFields = lines[lineNumber].Split(',');
-                    if (nextLineFields[7] != transactionId || nextLineFields[1] != "match")
+                    if ((nextLineFields[7] != "" && nextLineFields[7] != transactionId) || nextLineFields[1] != inputTransactionType)
                         throw new Exception("Could not find matching line for transaction: " + transactionId);
                     var nextLineAmount = Decimal.Parse(nextLineFields[3]);
                     var nextLineAssetType = nextLineFields[5];
@@ -102,35 +102,38 @@ namespace AssetAccounting
                         currencyAmount = thisLineAmount;
                         assetAmount = nextLineAmount;
                         itemType = nextLineAssetType;
-                        if (thisLineAmount < 0.0m)
-                            transactionType = TransactionTypeEnum.Purchase;
-                        else
-                            transactionType = TransactionTypeEnum.Sale;
                     }
                     else
                     {
                         assetAmount = thisLineAmount;
                         currencyAmount = nextLineAmount;                       
                     }
+                    if (currencyAmount <= 0.0m)
+                        transactionType = TransactionTypeEnum.Purchase;
+                    else
+                        transactionType = TransactionTypeEnum.Sale;
                     // Fee follows both match lines
-                    lineNumber++;
-                    var plus2LineFields = lines[lineNumber].Split(',');
-                    if (plus2LineFields[7] != transactionId || plus2LineFields[1] != "fee")
-                        throw new Exception("Could not find matching fee for transaction: " + transactionId);
-                    if (plus2LineFields[5] != "USD")
-                        throw new Exception("Fee expressed in non-USD currency " + plus2LineFields[5] + " for transaction: " + transactionId);
-                    // Add the fee to the currency amount (increase the basis)
-                    currencyAmount += Decimal.Parse(plus2LineFields[3]);
+                    if (inputTransactionType != "conversion")
+                    {
+                        lineNumber++;
+                        var plus2LineFields = lines[lineNumber].Split(',');
+                        if (plus2LineFields[7] != transactionId || plus2LineFields[1] != "fee")
+                            throw new Exception("Could not find matching fee for transaction: " + transactionId);
+                        if (plus2LineFields[5] != "USD")
+                            throw new Exception("Fee expressed in non-USD currency " + plus2LineFields[5] + " for transaction: " + transactionId);
+                        // Add the fee to the currency amount (increase the basis)
+                        currencyAmount += Decimal.Parse(plus2LineFields[3]);
+                    }
 
                 }
                 else throw new Exception("Unrecognized transaction type: " + inputTransactionType);
 
-                var a = Utils.GetAmounts(transactionType, assetAmount, currencyAmount);
+                var (amountPaid, amountReceived) = Utils.GetAmounts(transactionType, assetAmount, currencyAmount);
                 decimal? spotPrice = Utils.GetSpotPrice(currencyAmount, assetAmount);
 
-                string memo = FormMemo(transactionType, a.amountPaid, a.amountReceived, itemType);
+                string memo = FormMemo(transactionType, amountPaid, amountReceived, itemType);
                 transactions.Add(new Transaction(serviceName, accountName, dateAndTime,
-                    transactionId, transactionType, vault, a.amountPaid, currencyUnit, a.amountReceived,
+                    transactionId, transactionType, vault, amountPaid, currencyUnit, amountReceived,
                     measurementUnit, assetType, memo, itemType, spotPrice));
                 lineNumber++;
             }

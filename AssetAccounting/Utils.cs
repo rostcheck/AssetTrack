@@ -1,4 +1,5 @@
-﻿using static AssetAccounting.Utils;
+﻿using System;
+using static AssetAccounting.Utils;
 
 namespace AssetAccounting
 {
@@ -30,46 +31,38 @@ namespace AssetAccounting
                 return Math.Abs(currencyAmount / assetAmount);
         }
 
-		public struct Amounts
+		public static (decimal amountPaid, decimal amountReceived) GetAmounts(TransactionTypeEnum transactionType, decimal amount, decimal currencyAmount)
 		{
-			public Amounts()
+			decimal amountPaid = 0.0m;
+            decimal amountReceived = 0.0m;
+            if (transactionType == TransactionTypeEnum.Purchase || transactionType == TransactionTypeEnum.IncomeInAsset)
 			{
-                amountPaid = 0.0m;
-                amountReceived = 0.0m;
-            }
-			public decimal amountPaid;
-			public decimal amountReceived ;
-		}
-
-		public static Amounts GetAmounts(TransactionTypeEnum transactionType, decimal amount, decimal currencyAmount)
-		{
-			var m = new Amounts();
-			if (transactionType == TransactionTypeEnum.Purchase || transactionType == TransactionTypeEnum.IncomeInAsset)
-			{
-				m.amountPaid = Math.Abs(currencyAmount);
-				m.amountReceived = Math.Abs(amount);
+				amountPaid = Math.Abs(currencyAmount);
+				amountReceived = Math.Abs(amount);
 			}
 			else if (transactionType == TransactionTypeEnum.Sale)
 			{
-				m.amountPaid = Math.Abs(amount);
-				m.amountReceived = Math.Abs(currencyAmount);
+				amountPaid = Math.Abs(amount);
+				amountReceived = Math.Abs(currencyAmount);
 			}
 			else if (transactionType == TransactionTypeEnum.TransferIn)
-				m.amountReceived = Math.Abs(amount);
+				amountReceived = Math.Abs(amount);
 			else if (transactionType == TransactionTypeEnum.TransferOut)
-				m.amountPaid = Math.Abs(amount);
+				amountPaid = Math.Abs(amount);
 			else if (transactionType == TransactionTypeEnum.FeeInCurrency)
-				m.amountPaid = Math.Abs(currencyAmount);
+				amountPaid = Math.Abs(currencyAmount);
 			else if (transactionType == TransactionTypeEnum.IncomeInCurrency)
-				m.amountReceived = Math.Abs(currencyAmount);
+				amountReceived = Math.Abs(currencyAmount);
+			else if (transactionType == TransactionTypeEnum.FeeInAsset)
+				amountPaid = Math.Abs(amount);
 			else if (transactionType == TransactionTypeEnum.IncomeInAsset)
 			{
-				m.amountPaid = Math.Abs(currencyAmount);
-				m.amountReceived = Math.Abs(currencyAmount); // Basis
+				amountPaid = Math.Abs(currencyAmount);
+				amountReceived = Math.Abs(currencyAmount); // Basis
 			}
 			else
 				throw new Exception("Unknown transaction type " + transactionType);
-			return m;
+			return (amountPaid, amountReceived);
         }
 
         private static decimal ConvertToGrams(decimal weight, AssetMeasurementUnitEnum fromUnits)

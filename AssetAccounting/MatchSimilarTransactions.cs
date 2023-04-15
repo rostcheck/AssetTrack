@@ -45,7 +45,7 @@
 				}
 
 				// Set the source vault property in the receipt side
-				receiveTransaction.MakeTransfer(sourceTransaction.Account, sourceTransaction.Vault);
+				receiveTransaction.MakeTransfer(sourceTransaction.Service, sourceTransaction.Account, sourceTransaction.Vault);
 				sourceTransactions.Add(sourceTransaction);
 			}
 			foreach (Transaction sourceTransaction in transactionsToRemove)

@@ -11,20 +11,25 @@ public class ParserTests
         var parser = new BullionVaultParser();
         var transactions = parser.Parse("../../../BullionVault-test-buytest.txt");
         Assert.AreEqual(1, transactions.Count);
-        Assert.AreEqual(transactions[0].Account, "test");
-        Assert.AreEqual(transactions[0].AmountReceived, 4);
-        Assert.AreEqual(transactions[0].Service, "BullionVault");
-        Assert.AreEqual(transactions[0].TransactionID, "37055944");
-        Assert.AreEqual(transactions[0].Vault, "Zurich");
+        Assert.AreEqual("test", transactions[0].Account);
+        Assert.AreEqual(4, transactions[0].AmountReceived);
+        Assert.AreEqual("BullionVault", transactions[0].Service);
+        Assert.AreEqual("37055944", transactions[0].TransactionID);
+        Assert.AreEqual("Zurich", transactions[0].Vault);
     }
 
-    //[TestMethod]
-    //public void TestBlockFiParser()
-    //{
-    //    var parser = new BlockFiParser();
-    //    var transactions = parser.Parse("../../../BlockFi-test-buytest.txt");
-    //    Assert.AreEqual(1, transactions.Count);
-    //}
+    [TestMethod]
+    public void TestBlockFiParser()
+    {
+        var parser = new BlockFiParser();
+        var transactions = parser.Parse("../../../BlockFi-test-buytest.txt");
+        Assert.AreEqual(10, transactions.Count);
+        Assert.AreEqual("USDC", transactions[0].ItemType);
+        Assert.AreEqual(10000.0m, transactions[0].AmountReceived);
+        Assert.AreEqual(TransactionTypeEnum.TransferIn, transactions[0].TransactionType);
+        Assert.AreEqual("BlockFi", transactions[0].Service);
+        Assert.AreEqual("Transferred in 10000.000000 USDC", transactions[0].Memo);
+    }
 
     [TestMethod]
     public void TestCoinbaseParser()

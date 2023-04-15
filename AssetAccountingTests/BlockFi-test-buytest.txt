@@ -1,3 +1,11 @@
-﻿Trade ID,Date,Buy Quantity,Buy Currency,Sold Quantity,Sold Currency,Rate Amount,Rate Currency,Type,Frequency,Destination
-5caa848f-8859-47d3-bae1-d7f0f9994395,2022-07-06 03:51:55,46.04229048,usdc,46.04229048,gusd,1.00000000,usdc,Trade,One Time,Wallet
-c049a60e-fff7-4a28-91a8-5e274b38aee8,2022-07-06 03:50:25,58.93806415,usdc,0.00301843,btc,19526.06625000,usdc,Trade,One Time,Wallet
+﻿Cryptocurrency,Amount,Transaction Type,Confirmed At,Value
+GUSD,-46.04229048,Trade,2022-07-06 03:51:55
+USDC,46.04229048,Trade,2022-07-06 03:51:55
+BTC,-0.00301843,Trade,2022-07-06 03:50:25
+USDC,58.93806415,Trade,2022-07-06 03:50:25
+BTC,0.00000379,BIA Withdraw,2022-01-25 21:34:36
+BTC,0.00059830,Cc Rewards Redemption,2021-12-10 20:25:40,130.24
+BTC,0.00001848,Interest Payment,2021-11-30 23:59:59,19.21
+GUSD,44.31000000,Bonus Payment,2021-08-13 23:59:59
+USDC,63.28767116,Interest Payment,2021-06-30 23:59:59
+USDC,10000.00000000,Crypto Transfer,2021-06-02 21:15:03

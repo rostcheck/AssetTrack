@@ -63,6 +63,11 @@
 			{
 				return service;
 			}
+			set
+			{
+				service = value;
+                history.Add("Transferred lot to " + value);
+            }
 		}
 
 		private decimal currentAmount;

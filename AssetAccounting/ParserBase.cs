@@ -23,10 +23,9 @@ namespace AssetAccounting
 		{
 			if (this.isLedgerFormat)
 			{
-                string serviceName = ParseServiceNameFromFilename(fileName);
-                string accountName = ParseAccountNameFromFilename(fileName, serviceName);
+                string accountName = ParseAccountNameFromFilename(fileName, this.serviceName);
                 var lines = ReadLines(fileName);
-				return this.ParseLines(lines, serviceName, accountName);
+				return this.ParseLines(lines, this.serviceName, accountName);
 			}
 			else
 			{
@@ -138,7 +137,7 @@ namespace AssetAccounting
 			var trimmedFileName = Path.GetFileName(fileName);
 			if (thisServiceName == null)
 				thisServiceName = serviceName;
-			Regex r = new Regex(string.Format(@"^{0}-(?<account>\w+)-", thisServiceName));
+			Regex r = new Regex(string.Format(@"^{0}(Pro)?-(?<account>\w+)-", thisServiceName));
 			Match m = r.Match(trimmedFileName);
 			if (m.Success)
 				return m.Groups["account"].Value;
