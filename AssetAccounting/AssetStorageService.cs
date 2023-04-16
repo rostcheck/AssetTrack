@@ -1,4 +1,6 @@
-﻿namespace AssetAccounting
+﻿using System.Transactions;
+
+namespace AssetAccounting
 {
 	public class AssetStorageService
 	{
@@ -31,13 +33,27 @@
 
 		public void ApplyTransactions(List<Transaction> transactionList)
 		{
-			transactionList = ScrubDuplicateTransactions(transactionList);
-			(transactionList, var problemTransactions) = FormTransfers(transactionList);
+            //(transactionList, var duplicates) = ScrubDuplicateTransactions(transactionList);
+            //DumpTransactions("tm-duplicates.txt", duplicates);
+            (transactionList, var problemTransactions) = FormTransfers(transactionList);
 			DumpTransactions("tm-no-match-transfers.txt", problemTransactions);
             //transactionList = MatchAlgorithmFactory.Create(MatchAlgorithmEnum.MatchAcrossTransactions)
             //	.FormLikeKindExchanges(transactionList, logWriter);
             foreach (Transaction transaction in transactionList.OrderBy(s => s.DateAndTime))
 			{
+				if (transaction.ItemType == "BTC")
+				{
+                    List<Lot> availableLots = lots.Where(
+                        s =>
+                        s.Service == "CoinbasePro" &&  
+                        //s.AssetType == transaction.AssetType &&
+                        s.ItemType == "BTC" &&
+                        //s.Vault == transaction.TransferFromVault &&
+                        //s.Account == transaction.TransferFromAccount &&
+                        s.IsDepleted() == false).OrderBy(s => s.PurchaseDate).ToList();
+                    decimal amountAvailable = availableLots.Sum(s => s.CurrentAmount(transaction.MeasurementUnit));
+					logWriter.WriteEntry(string.Format("Entering: BTC balance in CoinbasePro is {0:0.00000000}", amountAvailable));
+				}
 				switch (transaction.TransactionType)
 				{
 					case TransactionTypeEnum.Purchase:
@@ -57,21 +73,67 @@
 						ProcessSale(transaction);
 						break;
 					case TransactionTypeEnum.TransferIn:
-						logWriter.WriteEntry(string.Format("{0} {1} transferred {2:0.000000} {3}s {4} ({5}) from account {6}, vault {7} to account {8}, vault {9}",
+						logWriter.WriteEntry(string.Format("{0} {1} received in {2:0.000000} {3}s {4} ({5}) from account {6}, vault {7} to account {8}, vault {9}",
 							transaction.DateAndTime.ToShortDateString(), transaction.Service, transaction.AmountReceived, 
 							transaction.MeasurementUnit.ToString().ToLower(), transaction.AssetType.ToString().ToLower(), 
 							transaction.ItemType, 
 							transaction.TransferFromAccount, transaction.TransferFromVault, transaction.Account, transaction.Vault));
 						ProcessTransfer(transaction);
 							break;
-					case TransactionTypeEnum.FeeInCurrency:
-						ApplyStorageFeeInCurrency(transaction);
-						break;
+                    case TransactionTypeEnum.TransferOut:
+						// These should already be converted to all transfers in, but log just in case
+                        logWriter.WriteEntry(string.Format("{0} {1} transferred out {2:0.000000} {3}s {4} ({5})",
+                            transaction.DateAndTime.ToShortDateString(), transaction.Service, transaction.AmountPaid,
+                            transaction.MeasurementUnit.ToString().ToLower(), transaction.AssetType.ToString().ToLower(),
+                            transaction.ItemType));
+                        break;
+                    case TransactionTypeEnum.FeeInCurrency:
+                        logWriter.WriteEntry(string.Format("{0} {1} applied fee {2:0.000000} in currency {3}",
+                            transaction.DateAndTime.ToShortDateString(), transaction.Service, transaction.AmountPaid,
+                            transaction.CurrencyUnit));
+                        ApplyStorageFeeInCurrency(transaction);
+                        break;
 					case TransactionTypeEnum.FeeInAsset:
-						ApplyFeeInAsset(transaction);
+                        logWriter.WriteEntry(string.Format("{0} {1} applied fee {2:0.000000} {3}s in asset {4} ({5})",
+                            transaction.DateAndTime.ToShortDateString(), transaction.Service, transaction.AmountPaid,
+                            transaction.MeasurementUnit.ToString().ToLower(), transaction.AssetType.ToString().ToLower(),
+                            transaction.ItemType));
+                        ApplyFeeInAsset(transaction);
 						break;
-				}
-			}
+                    case TransactionTypeEnum.IncomeInCurrency:
+                        logWriter.WriteEntry(string.Format("{0} {1} received income {2:0.000000} in currency {3}",
+                            transaction.DateAndTime.ToShortDateString(), transaction.Service, transaction.AmountReceived,
+                            transaction.CurrencyUnit));
+                        // Do nothing - we don't track currency income yet
+                        break;
+					case TransactionTypeEnum.IncomeInAsset:
+                        logWriter.WriteEntry(string.Format("{0} {1} received income of {2:0.000000} {3}s {4} ({5}) to account {6} vault {7}",
+                            transaction.DateAndTime.ToShortDateString(), transaction.Service, transaction.AmountReceived,
+                            transaction.MeasurementUnit.ToString().ToLower(), transaction.AssetType.ToString().ToLower(),
+                            transaction.ItemType, transaction.Account, transaction.Vault));
+                        PurchaseNewLot(transaction);
+                        break;
+					default:
+                        logWriter.WriteEntry(string.Format("{0} {1} WARNING found unexpected transaction with values {2:0.000000} {3}s {4} ({5}) to account {6} vault {7}",
+                            transaction.DateAndTime.ToShortDateString(), transaction.Service, transaction.AmountReceived,
+                            transaction.MeasurementUnit.ToString().ToLower(), transaction.AssetType.ToString().ToLower(),
+                            transaction.ItemType, transaction.Account, transaction.Vault));
+						break;
+                }
+                if (transaction.ItemType == "BTC")
+                {
+                    List<Lot> availableLots = lots.Where(
+                        s =>
+                        s.Service == "CoinbasePro" &&
+                        //s.AssetType == transaction.AssetType &&
+                        s.ItemType == "BTC" &&
+                        //s.Vault == transaction.TransferFromVault &&
+                        //s.Account == transaction.TransferFromAccount &&
+                        s.IsDepleted() == false).OrderBy(s => s.PurchaseDate).ToList();
+                    decimal amountAvailable = availableLots.Sum(s => s.CurrentAmount(transaction.MeasurementUnit));
+                    logWriter.WriteEntry(string.Format("Leaving: BTC balance in CoinbasePro is {0:0.00000000}", amountAvailable));
+                }
+            }
 		}
 
 		public void DumpTransactions(string filename, List<Transaction> transactions)
@@ -168,10 +230,12 @@
         }
 
 		// Coinbase Pro files include transfer transactions that also appear on Coinbase as outbound transactions
-		private List<Transaction> ScrubDuplicateTransactions(IList<Transaction> transactionList)
+		private (List<Transaction> transactions, List<Transaction> duplicates)
+			ScrubDuplicateTransactions(IList<Transaction> transactionList)
 		{
             List<Transaction> outputTransactions = new List<Transaction>();
-			foreach (Transaction sourceTransaction in transactionList)
+            List<Transaction> duplicates = new List<Transaction>();
+            foreach (Transaction sourceTransaction in transactionList)
 			{
 				if (sourceTransaction.TransactionType == TransactionTypeEnum.TransferOut &&
 					sourceTransaction.Service == "CoinbasePro")
@@ -184,15 +248,21 @@
 						&& s.Service == "Coinbase"
 						).FirstOrDefault();
 					if (duplicate != null)
-						continue;
-
-				}
-				outputTransactions.Add(sourceTransaction);
-			}
-			return outputTransactions;
+					{
+                        logWriter.WriteEntry(string.Format("{0} {1} scrubbed duplicate transaction that also apears in CoinbasePro: {2:0.000000} {3}s {4} ({5}) account {6}, vault {7}",
+                        duplicate.DateAndTime.ToShortDateString(), duplicate.Service, duplicate.Measure,
+                        duplicate.MeasurementUnit.ToString().ToLower(), duplicate.AssetType.ToString().ToLower(),
+                        duplicate.ItemType, duplicate.Account, duplicate.Vault));
+						duplicates.Add(duplicate);
+                        continue;
+                    }
+                }
+                outputTransactions.Add(sourceTransaction);
+            }
+            return (outputTransactions, duplicates);
         }
 
-		// Modified crypto rules for finding transaction pairs
+        // Modified crypto rules for finding transaction pairs
         private Transaction? GetSourceTransactionCrypto(Transaction transaction, List<Transaction> transactionList)
         {
             Transaction? sourceTransaction = null;
@@ -202,7 +272,7 @@
             {
 				DateTime startTime = transaction.DateAndTime.AddHours(-5.0);
                 DateTime endTime = transaction.DateAndTime.AddHours(5.0);
-				decimal amountMin = transaction.Measure * 0.9m;
+				decimal amountMin = transaction.Measure;
                 decimal amountMax = transaction.Measure * 1.1m;
 				// Inferred source (transaction ID not available/trustworthy)
 				var possibles = transactionList.OrderBy(s => s.DateAndTime).Where(
@@ -210,14 +280,17 @@
 					s.DateAndTime >= startTime &&
 					s.DateAndTime <= endTime &&
 					s.ItemType == transaction.ItemType &&
-					s.TransactionType == TransactionTypeEnum.TransferOut //&&
-																		 //s.Measure >= amountMin &&
+					s.TransactionType == TransactionTypeEnum.TransferOut &&
+					s.Measure >= amountMin &&
+                    // No self-transfers
+                    !((s.Service == transaction.Service) && (s.Account == transaction.Account) && (s.Vault == transaction.Vault)) 
 																		 //s.Measure <= amountMax
 																		 //s.AmountPaid == transaction.AmountReceived
 																		 //s.AmountPaid > 0.0m
 																		 //&& !s.Memo.Contains("Fee")
 					);
-                sourceTransaction = possibles.FirstOrDefault();
+				// Find the closest matching amount
+                sourceTransaction = possibles.OrderBy(s => Math.Abs(s.Measure - transaction.Measure)).FirstOrDefault();
                 // Fix generic "Transfer" to indicate direction
                 if (sourceTransaction is not null)
                 {
@@ -300,16 +373,34 @@
 		// All that happens in a transfer is the vault changes
 		private void ProcessTransfer(Transaction transaction)
 		{
-			// Find the open lots in the current vault with the correct asset type
-			List<Lot> availableLots = lots.Where(
-				s =>
-				// s.Service == transaction.Service &&  // temporarily disable service matching
-				s.AssetType == transaction.AssetType &&
-				s.ItemType == transaction.ItemType &&
-				s.Vault == transaction.TransferFromVault &&
-				s.Account == transaction.TransferFromAccount &&
-				s.IsDepleted() == false)
-				.OrderBy(s => s.PurchaseDate).ToList();
+            List<Lot> allLots = lots.Where(
+                s =>
+                s.Service != "Celsius" &&  // temporarily disable service matching
+                //s.AssetType == transaction.AssetType &&
+                s.ItemType == transaction.ItemType &&
+                //s.Vault == transaction.TransferFromVault &&
+                //s.Account == transaction.TransferFromAccount &&
+                s.IsDepleted() == false)
+                .OrderBy(s => s.PurchaseDate).ToList();
+            decimal allVal = allLots.Sum(s => s.CurrentAmount(transaction.MeasurementUnit));
+
+            // Find the open lots in the current vault with the correct asset type
+            List<Lot> availableLots = lots.Where(
+                s =>
+                s.Service == transaction.TransferFromService &&  // temporarily disable service matching
+                s.AssetType == transaction.AssetType &&
+                s.ItemType == transaction.ItemType &&
+                s.Vault == transaction.TransferFromVault &&
+                s.Account == transaction.TransferFromAccount &&
+                s.IsDepleted() == false)
+                .OrderBy(s => s.PurchaseDate).ToList();
+            decimal availVal = availableLots.Sum(s => s.CurrentAmount(transaction.MeasurementUnit));
+
+			var diffLots = allLots.Where(s => !availableLots.Contains(s)).ToList();
+			Utils.ExportLots(lots, "tm-lots.txt");
+            //availableLots.Where(s => inCorrectLots.Contains(s) != true);
+            decimal amountAvailable = availableLots.Sum(s => s.CurrentAmount(transaction.MeasurementUnit));
+			logWriter.WriteEntry(string.Format("Entering processTransfer, amount available is {0:0.00000000}", amountAvailable));
 			AmountInAsset amount = new AmountInAsset(transaction.DateAndTime, transaction.TransactionID, 
 				                       transaction.Vault, transaction.AmountReceived, transaction.MeasurementUnit, 
 				                       transaction.AssetType);
@@ -337,6 +428,7 @@
 					// Just reassign entire lot to other vault
 					lot.Vault = transaction.Vault;
 					lot.Service = transaction.Service;
+					lot.Account = transaction.Account;
 					amount.Decrease(lot.CurrentAmount(lot.measurementUnit), lot.measurementUnit); // some transfer remaining
 				}
 			}

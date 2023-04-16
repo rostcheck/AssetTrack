@@ -140,7 +140,7 @@ namespace AssetAccounting
 			Regex r = new Regex(string.Format(@"^{0}(Pro)?-(?<account>\w+)-", thisServiceName));
 			Match m = r.Match(trimmedFileName);
 			if (m.Success)
-				return m.Groups["account"].Value;
+				return m.Groups["account"].Value.ToLower();
 			else
 				throw new Exception("Cannot parse account name from filename " + fileName);
 		}
