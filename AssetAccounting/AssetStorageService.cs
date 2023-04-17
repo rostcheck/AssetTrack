@@ -413,14 +413,20 @@ namespace AssetAccounting
                     if (transaction.TransferFromVault is null)
                         throw new Exception("Poorly formatted transaction in ProcessTransfer - missing TransferFromVault");
 
-                    // Split lot and transfer part of it
-                    Lot newLot = new Lot(transaction.Service, lot.LotID + "-split", lot.PurchaseDate, amount.Amount, amount.MeasurementUnit, 
-						lot.OriginalPrice, lot.AssetType, transaction.Vault, transaction.Account, transaction.ItemType);
+					// Split lot and transfer part of it
+					decimal percentToTransfer = amount.Amount / lot.CurrentAmount(amount.MeasurementUnit);
+					decimal oldLotAdjustedPrice = lot.AdjustedPrice.Value * (1.0m - percentToTransfer);
+					var newLotPrice = new ValueInCurrency(lot.AdjustedPrice.Value * percentToTransfer, lot.AdjustedPrice.Currency,
+						transaction.DateAndTime);
+
+                    Lot newLot = new Lot(transaction.Service, lot.LotID + "-split", lot.PurchaseDate, amount.Amount, amount.MeasurementUnit,
+                        newLotPrice, lot.AssetType, transaction.Vault, transaction.Account, transaction.ItemType);
 					lots.Add(newLot);
 					// Remove from original lot
 					lot.DecreaseMeasureViaTransfer(transaction.DateAndTime, amount.Amount, amount.MeasurementUnit,
 						transaction.TransferFromAccount, transaction.TransferFromVault);
-					amount.Decrease(amount.Amount, amount.MeasurementUnit);
+					lot.AdjustedPrice.Value = oldLotAdjustedPrice;
+                    amount.Decrease(amount.Amount, amount.MeasurementUnit);
 					break;
 				}
 				else
